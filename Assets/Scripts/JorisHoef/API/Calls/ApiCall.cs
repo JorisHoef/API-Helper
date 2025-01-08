@@ -5,7 +5,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
-namespace JorisHoef.API
+namespace JorisHoef.API.Calls
 {
     public class ApiCall<TResponse>
     {

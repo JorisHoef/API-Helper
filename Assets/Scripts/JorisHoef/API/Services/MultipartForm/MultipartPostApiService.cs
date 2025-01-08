@@ -1,4 +1,4 @@
-﻿namespace JorisHoef.API.Services.MultipartForms
+﻿namespace JorisHoef.API.Services.MultipartForm
 {
     public class MultipartPostApiService<TResponse> : MultipartApiService<TResponse>
     {

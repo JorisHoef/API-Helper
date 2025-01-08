@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
+using JorisHoef.API.Calls;
 using UnityEngine;
 
 namespace JorisHoef.API.Services.Base

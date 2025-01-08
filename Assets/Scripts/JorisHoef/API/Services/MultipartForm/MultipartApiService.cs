@@ -1,9 +1,10 @@
 ﻿using System;
 using System.Threading.Tasks;
+using JorisHoef.API.Calls;
 using JorisHoef.API.Services.Base;
 using UnityEngine;
 
-namespace JorisHoef.API.Services.MultipartForms
+namespace JorisHoef.API.Services.MultipartForm
 {
     /// <summary>
     /// For any multiform data

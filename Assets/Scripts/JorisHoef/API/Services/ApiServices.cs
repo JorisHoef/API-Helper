@@ -1,6 +1,6 @@
 ﻿using System.Threading.Tasks;
 using JorisHoef.API.Services.Base;
-using JorisHoef.API.Services.MultipartForms;
+using JorisHoef.API.Services.MultipartForm;
 
 namespace JorisHoef.API.Services
 {
