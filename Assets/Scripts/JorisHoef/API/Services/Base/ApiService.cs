@@ -13,15 +13,27 @@ namespace JorisHoef.API.Services.Base
     /// <remarks>
     /// TReponse type does not have to match the Body type, the Body we send has nothing to do with this type!
     /// </remarks>
-    public abstract class ApiService<TResponse>
+    public class ApiService<TResponse>
     {
-        protected abstract HttpMethod HttpMethod { get; }
-        
-        public virtual async Task<ApiCallResult<TResponse>> ExecuteAsync(string endpoint, object data = null, bool requiresAuthentication = false)
+        protected HttpMethod HttpMethod { get; }
+
+        public ApiService(HttpMethod httpMethod)
+        {
+            HttpMethod = httpMethod;
+        }
+
+        public virtual async Task<ApiCallResult<TResponse>> ExecuteAsync(string endpoint,
+                                                                         bool requiresAuthentication,
+                                                                         object data = null,
+                                                                         string accessToken = null)
         {
             try
             {
-                var apiCall = new ApiCall<TResponse>(endpoint, this.HttpMethod, data, requiresAuthentication);
+                var apiCall = ApiCall<TResponse>.GetApiCall<TResponse>(endpoint,
+                                                                       this.HttpMethod,
+                                                                       requiresAuthentication,
+                                                                       data,
+                                                                       accessToken);
 
                 ApiCallResult<TResponse> result = await apiCall.Execute();
         

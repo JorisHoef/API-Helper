@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using System;
+using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
@@ -6,7 +7,7 @@ namespace JorisHoef.API.Services
 {
     public static class TaskExtensions
     {
-        public static IEnumerator AsIEnumeratorWithCallback<T>(this Task<T> task, System.Action<T> onCompleted)
+        public static IEnumerator AsIEnumeratorWithCallback<T>(this Task<T> task, Action<T> onCompleted)
         {
             while (!task.IsCompleted)
             {

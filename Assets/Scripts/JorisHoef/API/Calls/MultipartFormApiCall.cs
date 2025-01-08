@@ -6,7 +6,24 @@ namespace JorisHoef.API.Calls
 {
     public class MultipartFormApiCall<TResult> : ApiCall<TResult>
     {
-        public MultipartFormApiCall(string url, HttpMethod method, object data = null, bool requiresAuthentication = true) : base(url, method, data, requiresAuthentication) { }
+        private MultipartFormApiCall(string url, HttpMethod method, bool requiresAuthentication, object data) : base(url, method, requiresAuthentication, data) { }
+        private MultipartFormApiCall(string url, HttpMethod method, bool requiresAuthentication, object data, string accessToken) : base(url, method, requiresAuthentication, data, accessToken) { }
+
+        public new static ApiCall<TResponse> GetApiCall<TResponse>(string url,
+                                                                   HttpMethod method,
+                                                                   bool requiresAuthentication,
+                                                                   object data,
+                                                                   string tokenToSend = null)
+        {
+            if (requiresAuthentication)
+            {
+                return new MultipartFormApiCall<TResponse>(url, method, requiresAuthentication, data, tokenToSend);
+            }
+            else
+            {
+                return new MultipartFormApiCall<TResponse>(url, method, requiresAuthentication, data);
+            }
+        }
 
         protected override UnityWebRequest PrepareRequest(string accessToken)
         {

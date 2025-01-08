@@ -10,13 +10,21 @@ namespace JorisHoef.API.Services.MultipartForm
     /// For any multiform data
     /// </summary>
     /// <typeparam name="TResponse"></typeparam>
-    public abstract class MultipartApiService<TResponse> : ApiService<TResponse>
+    public class MultipartApiService<TResponse> : ApiService<TResponse>
     {
-        public override async Task<ApiCallResult<TResponse>> ExecuteAsync(string endpoint, object data = null, bool requiresAuthentication = false)
+        public MultipartApiService(HttpMethod httpMethod) : base(httpMethod) { }
+
+        public override async Task<ApiCallResult<TResponse>> ExecuteAsync(string endpoint,
+                                                                          bool requiresAuthentication,
+                                                                          object data = null,
+                                                                          string accessToken = null)
         {
             try
             {
-                var apiCall = new MultipartFormApiCall<TResponse>(endpoint, this.HttpMethod, data, requiresAuthentication);
+                var apiCall = MultipartFormApiCall<TResponse>.GetApiCall<TResponse>(endpoint,
+                                                                                    this.HttpMethod,
+                                                                                    requiresAuthentication,
+                                                                                    data);
         
                 ApiCallResult<TResponse> result = await apiCall.Execute();
                 if (!result.IsSuccess)

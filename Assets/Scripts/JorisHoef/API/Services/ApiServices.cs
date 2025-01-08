@@ -7,22 +7,8 @@ namespace JorisHoef.API.Services
     /// <summary>
     /// Encapsulates all ApiServices
     /// </summary>
-    public class ApiServices
+    public static class ApiServices
     {
-        /// <summary>
-        /// POST request
-        /// </summary>
-        /// <param name="endpoint"></param>
-        /// <param name="data"></param>
-        /// <param name="requiresAuthentication"></param>
-        /// <typeparam name="TResponse">The type we expect in the response</typeparam>
-        /// <returns></returns>
-        public Task<ApiCallResult<TResponse>> PostAsync<TResponse>(string endpoint, object data, bool requiresAuthentication)
-        {
-            var postService = new PostApiService<TResponse>();
-            return postService.ExecuteAsync(endpoint, data, requiresAuthentication);
-        }
-        
         /// <summary>
         /// POST request for multiform
         /// </summary>
@@ -31,10 +17,30 @@ namespace JorisHoef.API.Services
         /// <param name="requiresAuthentication"></param>
         /// <typeparam name="TResponse">The type we expect in the response</typeparam>
         /// <returns></returns>
-        public Task<ApiCallResult<TResponse>> PostMultipartAsync<TResponse>(string endpoint, object data, bool requiresAuthentication)
+        public static Task<ApiCallResult<TResponse>> PostMultipartAsync<TResponse>(string endpoint,
+                                                                                    object data,
+                                                                                    bool requiresAuthentication,
+                                                                                    string accessToken = null)
         {
-            var postMultipartService = new MultipartPostApiService<TResponse>();
-            return postMultipartService.ExecuteAsync(endpoint, data, requiresAuthentication);
+            var postMultipartService = new MultipartApiService<TResponse>(HttpMethod.POST);
+            return postMultipartService.ExecuteAsync(endpoint, requiresAuthentication, data, accessToken);
+        }
+
+        /// <summary>
+        /// POST request
+        /// </summary>
+        /// <param name="endpoint"></param>
+        /// <param name="data"></param>
+        /// <param name="requiresAuthentication"></param>
+        /// <typeparam name="TResponse">The type we expect in the response</typeparam>
+        /// <returns></returns>
+        public static Task<ApiCallResult<TResponse>> PostAsync<TResponse>(string endpoint,
+                                                                          object data,
+                                                                          bool requiresAuthentication,
+                                                                          string accessToken = null)
+        {
+            var postService = new ApiService<TResponse>(HttpMethod.POST);
+            return postService.ExecuteAsync(endpoint, requiresAuthentication, data, accessToken);
         }
         
         /// <summary>
@@ -45,10 +51,13 @@ namespace JorisHoef.API.Services
         /// <param name="requiresAuthentication"></param>
         /// <typeparam name="TResponse">The type we expect in the response</typeparam>
         /// <returns></returns>
-        public Task<ApiCallResult<TResponse>> PutAsync<TResponse>(string endpoint, object data, bool requiresAuthentication)
+        public static Task<ApiCallResult<TResponse>> PutAsync<TResponse>(string endpoint,
+                                                                         object data,
+                                                                         bool requiresAuthentication,
+                                                                         string accessToken = null)
         {
-            var putService = new PutApiService<TResponse>();
-            return putService.ExecuteAsync(endpoint, data, requiresAuthentication);
+            var putService = new ApiService<TResponse>(HttpMethod.PUT);
+            return putService.ExecuteAsync(endpoint, requiresAuthentication, data, accessToken);
         }
         
         /// <summary>
@@ -58,10 +67,12 @@ namespace JorisHoef.API.Services
         /// <param name="requiresAuthentication"></param>
         /// <typeparam name="TResponse">The type we expect in the response</typeparam>
         /// <returns></returns>
-        public Task<ApiCallResult<TResponse>> GetAsync<TResponse>(string endpoint, bool requiresAuthentication)
+        public static Task<ApiCallResult<TResponse>> GetAsync<TResponse>(string endpoint,
+                                                                         bool requiresAuthentication,
+                                                                         string accessToken = null)
         {
-            var getService = new GetApiService<TResponse>();
-            return getService.ExecuteAsync(endpoint, requiresAuthentication: requiresAuthentication);
+            var getService = new ApiService<TResponse>(HttpMethod.GET);
+            return getService.ExecuteAsync(endpoint, requiresAuthentication, accessToken);
         }
 
         /// <summary>
@@ -71,10 +82,12 @@ namespace JorisHoef.API.Services
         /// <param name="requiresAuthentication"></param>
         /// <typeparam name="TResponse">The type we expect in the response</typeparam>
         /// <returns></returns>
-        public Task<ApiCallResult<TResponse>> DeleteAsync<TResponse>(string endpoint, bool requiresAuthentication)
+        public static Task<ApiCallResult<TResponse>> DeleteAsync<TResponse>(string endpoint,
+                                                                            bool requiresAuthentication,
+                                                                            string accessToken = null)
         {
-            var deleteService = new DeleteApiService<TResponse>();
-            return deleteService.ExecuteAsync(endpoint, requiresAuthentication: requiresAuthentication);
+            var deleteService = new ApiService<TResponse>(HttpMethod.DELETE);
+            return deleteService.ExecuteAsync(endpoint, requiresAuthentication, accessToken);
         }
     }
 }

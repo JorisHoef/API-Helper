@@ -16,14 +16,40 @@ namespace JorisHoef.API.Calls
         private readonly bool _requiresAuthentication;
         private readonly string _accessToken;
 
-        public ApiCall(string url, HttpMethod method, object data = null, bool requiresAuthentication = true, string tokenToSend = null)
+        protected ApiCall(string url, HttpMethod method, bool requiresAuthentication, object data)
         {
             _url = url;
             _method = method;
             _data = data;
             _requiresAuthentication = requiresAuthentication;
-            _accessToken = tokenToSend;
+            _accessToken = null;
         }
+
+        protected ApiCall(string url, HttpMethod method, bool requiresAuthentication, object data, string accessToken)
+        {
+            _url = url;
+            _method = method;
+            _data = data;
+            _requiresAuthentication = requiresAuthentication;
+            _accessToken = accessToken;
+        }
+
+        public static ApiCall<TResponse> GetApiCall<TResponse>(string url,
+                                                               HttpMethod method,
+                                                               bool requiresAuthentication,
+                                                               object data,
+                                                               string accessToken = null)
+        {
+            if (requiresAuthentication)
+            {
+                return new ApiCall<TResponse>(url, method, requiresAuthentication, data, accessToken);
+            }
+            else
+            {
+                return new ApiCall<TResponse>(url, method, requiresAuthentication, data);
+            }
+        }
+
 
         public async Task<ApiCallResult<TResponse>> Execute()
         {
