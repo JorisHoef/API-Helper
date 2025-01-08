@@ -14,22 +14,20 @@ namespace JorisHoef.API.Calls
         protected readonly object _data;
 
         private readonly bool _requiresAuthentication;
+        private readonly string _accessToken;
 
-        private string AccessToken => !string.IsNullOrEmpty(ApiSession.Instance.AccessToken) ? ApiSession.Instance.AccessToken : null;
-
-        public ApiCall(string url, HttpMethod method, object data = null, bool requiresAuthentication = true)
+        public ApiCall(string url, HttpMethod method, object data = null, bool requiresAuthentication = true, string tokenToSend = null)
         {
             _url = url;
             _method = method;
             _data = data;
             _requiresAuthentication = requiresAuthentication;
+            _accessToken = tokenToSend;
         }
 
         public async Task<ApiCallResult<TResponse>> Execute()
         {
-            string tokenToSend = AccessToken;
-
-            if (string.IsNullOrEmpty(tokenToSend) && _requiresAuthentication)
+            if (string.IsNullOrEmpty(_accessToken) && _requiresAuthentication)
             {
                 return new ApiCallResult<TResponse>
                 {
@@ -39,7 +37,7 @@ namespace JorisHoef.API.Calls
                 };
             }
 
-            using (UnityWebRequest webRequest = PrepareRequest(tokenToSend))
+            using (UnityWebRequest webRequest = PrepareRequest(_accessToken))
             {
                 try
                 {
@@ -85,7 +83,7 @@ namespace JorisHoef.API.Calls
             }
         }
 
-        protected virtual UnityWebRequest PrepareRequest(string tokenToSend)
+        protected virtual UnityWebRequest PrepareRequest(string accessToken)
         {
             try
             {
@@ -103,9 +101,9 @@ namespace JorisHoef.API.Calls
 
                 webRequest.SetRequestHeader("Accept", "application/json");
 
-                if (!string.IsNullOrEmpty(tokenToSend))
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    webRequest.SetRequestHeader("Authorization", $"Bearer {tokenToSend}");
+                    webRequest.SetRequestHeader("Authorization", $"Bearer {accessToken}");
                 }
 
                 return webRequest;
@@ -199,7 +197,7 @@ namespace JorisHoef.API.Calls
         {
             var completionSource = new TaskCompletionSource<object>();
 
-            webRequest.SendWebRequest().completed += operation =>
+            webRequest.SendWebRequest().completed += _ =>
             {
                 if (webRequest.result == UnityWebRequest.Result.ConnectionError || webRequest.result == UnityWebRequest.Result.ProtocolError)
                 {

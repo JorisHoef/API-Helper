@@ -8,7 +8,7 @@ namespace JorisHoef.API.Calls
     {
         public MultipartFormApiCall(string url, HttpMethod method, object data = null, bool requiresAuthentication = true) : base(url, method, data, requiresAuthentication) { }
 
-        protected override UnityWebRequest PrepareRequest(string tokenToSend)
+        protected override UnityWebRequest PrepareRequest(string accessToken)
         {
             if (base._method == HttpMethod.POST && base._data is IMultiFormPropertyAdder multiFormPropertyAdder)
             {
@@ -17,9 +17,9 @@ namespace JorisHoef.API.Calls
         
                 UnityWebRequest webRequest = UnityWebRequest.Post(this._url, form);
 
-                if (!string.IsNullOrEmpty(tokenToSend))
+                if (!string.IsNullOrEmpty(accessToken))
                 {
-                    webRequest.SetRequestHeader("Authorization", $"Bearer {tokenToSend}");
+                    webRequest.SetRequestHeader("Authorization", $"Bearer {accessToken}");
                 }
         
                 webRequest.SetRequestHeader("Accept", "application/json");
@@ -28,7 +28,7 @@ namespace JorisHoef.API.Calls
             }
             else
             {
-                return base.PrepareRequest(tokenToSend);
+                return base.PrepareRequest(accessToken);
             }
         }
     }
