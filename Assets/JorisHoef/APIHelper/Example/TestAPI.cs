@@ -21,13 +21,13 @@ namespace JorisHoef.APIHelper.Example
 
             void OnCompleted(ApiCallResult<List<PostsData>> responseBody)
             {
+                //For example, fill a list of UI objects or 3D objects representing the data
                 if (responseBody.IsSuccess)
                 {
                     foreach (var postsData in responseBody.Data)
                     {
                         Debug.Log($"Succeeded GET: {MOCK_API_URL} with Title: {postsData.Title} and UserId: {postsData.UserId}");
                     }
-
                 }
                 else
                 {
@@ -44,6 +44,7 @@ namespace JorisHoef.APIHelper.Example
             StartCoroutine(ApiServices.GetAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
+            //For example, get more detailed data on a specific object
             void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
@@ -62,6 +63,7 @@ namespace JorisHoef.APIHelper.Example
             StartCoroutine(ApiServices.PostAsync<PostsData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
+            //For example, create a new object and confirm creation after backend successfully handled
             void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
@@ -80,6 +82,7 @@ namespace JorisHoef.APIHelper.Example
             StartCoroutine(ApiServices.PutAsync<PostsData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
+            //For example, update an existing object in the scene
             void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
@@ -96,6 +99,7 @@ namespace JorisHoef.APIHelper.Example
             StartCoroutine(ApiServices.DeleteAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
+            //For example, delete an existing object
             void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
@@ -112,6 +116,7 @@ namespace JorisHoef.APIHelper.Example
             StartCoroutine(ApiServices.DeleteAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
+            //For example, show an error notification or a popup, or handle more gracefully
             void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
