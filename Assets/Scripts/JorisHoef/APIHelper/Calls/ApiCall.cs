@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Text;
 using System.Threading.Tasks;
+using JorisHoef.APIHelper.Models;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using UnityEngine.Networking;
 
-namespace JorisHoef.API.Calls
+namespace JorisHoef.APIHelper.Calls
 {
     public class ApiCall<TResponse>
     {

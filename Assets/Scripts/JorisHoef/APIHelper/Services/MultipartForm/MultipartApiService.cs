@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Threading.Tasks;
-using JorisHoef.API.Calls;
-using JorisHoef.API.Services.Base;
+using JorisHoef.APIHelper.Calls;
+using JorisHoef.APIHelper.Models;
+using JorisHoef.APIHelper.Services.Base;
 using UnityEngine;
 
-namespace JorisHoef.API.Services.MultipartForm
+namespace JorisHoef.APIHelper.Services.MultipartForm
 {
     /// <summary>
     /// For any multiform data

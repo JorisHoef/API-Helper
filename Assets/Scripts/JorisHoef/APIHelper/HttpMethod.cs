@@ -1,4 +1,4 @@
-﻿namespace JorisHoef.API
+﻿namespace JorisHoef.APIHelper
 {
     public enum HttpMethod
     {

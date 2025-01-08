@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace JorisHoef.API
+namespace JorisHoef.APIHelper.Models
 {
     /// <summary>
     /// Represents the result of an API call.

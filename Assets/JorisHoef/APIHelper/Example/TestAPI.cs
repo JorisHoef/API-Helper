@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using JorisHoef.API;
-using JorisHoef.API.Services;
-using JorisHoef.Example.Models;
+using JorisHoef.APIHelper.Example.Models;
+using JorisHoef.APIHelper.Models;
+using JorisHoef.APIHelper.Services;
 using UnityEngine;
 
-namespace JorisHoef.Example
+namespace JorisHoef.APIHelper.Example
 {
     public class TestAPI : MonoBehaviour
     {
@@ -16,10 +16,10 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}";
 
-            StartCoroutine(ApiServices.GetAsync<List<PostData>>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.GetAsync<List<PostsData>>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<List<PostData>> responseBody)
+            void OnCompleted(ApiCallResult<List<PostsData>> responseBody)
             {
                 if (responseBody.IsSuccess)
                 {
@@ -41,10 +41,10 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
 
-            StartCoroutine(ApiServices.GetAsync<PostData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.GetAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<PostData> responseBody)
+            void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded GET: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
@@ -57,12 +57,12 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}";
 
-            var fakePostsData = PostData.CreateFakePostsData(0, "I am Title of Post Created!", "I am Content of Post");
+            var fakePostsData = PostsData.CreateFakePostsData(0, "I am Title of Post Created!", "I am Content of Post");
 
-            StartCoroutine(ApiServices.PostAsync<PostData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.PostAsync<PostsData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<PostData> responseBody)
+            void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded POST: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
@@ -75,12 +75,12 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
 
-            var fakePostsData = PostData.UpdateFakePostsData(ID_TO_UPDATE, 0, "I am Title of PostData Updated!", "I am Contentof PostData");
+            var fakePostsData = PostsData.UpdateFakePostsData(ID_TO_UPDATE, 0, "I am Title of PostData Updated!", "I am Contentof PostData");
 
-            StartCoroutine(ApiServices.PutAsync<PostData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.PutAsync<PostsData>(endPoint, fakePostsData, false).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<PostData> responseBody)
+            void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded PUT: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
@@ -93,10 +93,10 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
 
-            StartCoroutine(ApiServices.DeleteAsync<PostData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.DeleteAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<PostData> responseBody)
+            void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded DELETE: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
@@ -109,10 +109,10 @@ namespace JorisHoef.Example
         {
             string endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}/123/123/123/123/123";
 
-            StartCoroutine(ApiServices.DeleteAsync<PostData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
+            StartCoroutine(ApiServices.DeleteAsync<PostsData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
             return;
 
-            void OnCompleted(ApiCallResult<PostData> responseBody)
+            void OnCompleted(ApiCallResult<PostsData> responseBody)
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded DELETE: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"

@@ -1,10 +1,11 @@
 ﻿using System;
 using System.Net.Http;
 using System.Threading.Tasks;
-using JorisHoef.API.Calls;
+using JorisHoef.APIHelper.Calls;
+using JorisHoef.APIHelper.Models;
 using UnityEngine;
 
-namespace JorisHoef.API.Services.Base
+namespace JorisHoef.APIHelper.Services.Base
 {
     /// <summary>
     /// Don't have to create a new apiservice for each call, can just call ApiServices class which will instantiate these services when required

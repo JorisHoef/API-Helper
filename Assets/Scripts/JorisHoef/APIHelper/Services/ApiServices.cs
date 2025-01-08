@@ -1,8 +1,9 @@
 ﻿using System.Threading.Tasks;
-using JorisHoef.API.Services.Base;
-using JorisHoef.API.Services.MultipartForm;
+using JorisHoef.APIHelper.Models;
+using JorisHoef.APIHelper.Services.Base;
+using JorisHoef.APIHelper.Services.MultipartForm;
 
-namespace JorisHoef.API.Services
+namespace JorisHoef.APIHelper.Services
 {
     /// <summary>
     /// Encapsulates all ApiServices

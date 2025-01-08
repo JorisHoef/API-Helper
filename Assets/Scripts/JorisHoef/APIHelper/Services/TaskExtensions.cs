@@ -3,7 +3,7 @@ using System.Collections;
 using System.Threading.Tasks;
 using UnityEngine;
 
-namespace JorisHoef.API.Services
+namespace JorisHoef.APIHelper.Services
 {
     public static class TaskExtensions
     {

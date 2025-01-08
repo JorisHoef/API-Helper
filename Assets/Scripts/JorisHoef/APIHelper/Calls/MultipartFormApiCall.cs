@@ -1,8 +1,8 @@
 ﻿using System.Collections.Generic;
-using JorisHoef.API.Services.MultipartForm;
+using JorisHoef.APIHelper.Services.MultipartForm;
 using UnityEngine.Networking;
 
-namespace JorisHoef.API.Calls
+namespace JorisHoef.APIHelper.Calls
 {
     public class MultipartFormApiCall<TResult> : ApiCall<TResult>
     {
