@@ -31,7 +31,7 @@ namespace JorisHoef.Example
                 }
                 else
                 {
-                    Debug.Log($"Failed GET: {MOCK_API_URL} with Error {responseBody.ErrorMessage}");
+                    Debug.Log($"Failed GET: {MOCK_API_URL} with Error {responseBody.Exception}");
                 }
             }
         }
@@ -48,7 +48,7 @@ namespace JorisHoef.Example
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded GET: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
-                                  : $"Failed GET: {MOCK_API_URL} with Error {responseBody.ErrorMessage}");
+                                  : $"Failed GET: {MOCK_API_URL} with Error {responseBody.Exception}");
             }
         }
 
@@ -66,7 +66,7 @@ namespace JorisHoef.Example
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded POST: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
-                                  : $"Failed POST: {MOCK_API_URL} with Error {responseBody.ErrorMessage}");
+                                  : $"Failed POST: {MOCK_API_URL} with Error {responseBody.Exception}");
             }
         }
 
@@ -84,7 +84,7 @@ namespace JorisHoef.Example
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded PUT: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
-                                  : $"Failed PUT: {MOCK_API_URL} with Error {responseBody.ErrorMessage}");
+                                  : $"Failed PUT: {MOCK_API_URL} with Error {responseBody.Exception}");
             }
         }
 
@@ -100,7 +100,23 @@ namespace JorisHoef.Example
             {
                 Debug.Log(responseBody.IsSuccess
                                   ? $"Succeeded DELETE: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
-                                  : $"Failed DELETE: {MOCK_API_URL} with Error {responseBody.ErrorMessage}");
+                                  : $"Failed DELETE: {MOCK_API_URL} with Error {responseBody.Exception}");
+            }
+        }
+
+        [ContextMenu("Test DELETE Will FAIL")]
+        private void TestDeleteFail()
+        {
+            string endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}/123/123/123/123/123";
+
+            StartCoroutine(ApiServices.DeleteAsync<PostData>(endPoint, false, null).AsIEnumeratorWithCallback(OnCompleted));
+            return;
+
+            void OnCompleted(ApiCallResult<PostData> responseBody)
+            {
+                Debug.Log(responseBody.IsSuccess
+                                  ? $"Succeeded DELETE: {MOCK_API_URL} with Title: {responseBody.Data.Title} and UserId: {responseBody.Data.UserId}"
+                                  : $"Failed DELETE: {MOCK_API_URL} with Error {responseBody.Exception}");
             }
         }
     }
