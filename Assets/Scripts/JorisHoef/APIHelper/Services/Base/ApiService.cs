@@ -1,8 +1,9 @@
-﻿using System;
+using System;
 using System.Net.Http;
 using System.Threading.Tasks;
 using JorisHoef.APIHelper.Calls;
 using JorisHoef.APIHelper.Models;
+using Unity.Plastic.Newtonsoft.Json.Linq;
 using UnityEngine;
 
 namespace JorisHoef.APIHelper.Services.Base
@@ -37,19 +38,23 @@ namespace JorisHoef.APIHelper.Services.Base
                                                                        accessToken);
 
                 ApiCallResult<TResponse> result = await apiCall.Execute();
-        
+
                 if (!result.IsSuccess)
                 {
-                    this.HandleApiFailure(result, endpoint);
+                    HandleApiFailure(result, endpoint);
                 }
+
+                string extractedMessage = result.IsSuccess
+                    ? null
+                    : TryExtractJsonMessage(result.ErrorMessage) ?? result.ErrorMessage;
 
                 return new ApiCallResult<TResponse>
                 {
-                        IsSuccess = result.IsSuccess,
-                        Data = result.IsSuccess ? result.Data : default,
-                        ErrorMessage = result.IsSuccess ? null : result.ErrorMessage,
-                        Exception = result.Exception,
-                        HttpMethod = this.HttpMethod
+                    IsSuccess = result.IsSuccess,
+                    Data = result.IsSuccess ? result.Data : default,
+                    ErrorMessage = extractedMessage,
+                    Exception = result.Exception,
+                    HttpMethod = this.HttpMethod
                 };
             }
             catch (Exception ex)
@@ -58,10 +63,10 @@ namespace JorisHoef.APIHelper.Services.Base
 
                 return new ApiCallResult<TResponse>
                 {
-                        IsSuccess = false,
-                        ErrorMessage = ex.Message,
-                        Exception = ex,
-                        HttpMethod = this.HttpMethod
+                    IsSuccess = false,
+                    ErrorMessage = ex.Message,
+                    Exception = ex,
+                    HttpMethod = this.HttpMethod
                 };
             }
         }
@@ -78,7 +83,7 @@ namespace JorisHoef.APIHelper.Services.Base
                 var exceptionDetails = result.Exception?.ToString() ?? "No exception details available";
 
                 Debug.LogError($"Error making API call to {endpoint} - HTTP Method: {result.HttpMethod} - Message: {errorMessage} - Exception: {exceptionDetails}");
-                
+
                 if (result.Exception is HttpRequestException httpRequestException)
                 {
                     Debug.LogError($"HTTP Request Error: {httpRequestException.Message}");
@@ -86,5 +91,52 @@ namespace JorisHoef.APIHelper.Services.Base
             }
         }
 
+        /// <summary>
+        /// Tries to extract the message from the JSON object if the errorMessage contains one.
+        /// It looks for "Response:" in the string and attempts to parse the JSON that follows.
+        /// </summary>
+        /// <param name="errorMessage">The full error message string.</param>
+        /// <returns>The extracted message if available; otherwise, null.</returns>
+        private string TryExtractJsonMessage(string errorMessage)
+        {
+            if (string.IsNullOrWhiteSpace(errorMessage))
+                return null;
+
+            try
+            {
+                int responseIndex = errorMessage.IndexOf("Response:", StringComparison.OrdinalIgnoreCase);
+                if (responseIndex >= 0)
+                {
+                    int jsonStart = errorMessage.IndexOf('{', responseIndex);
+                    if (jsonStart >= 0)
+                    {
+                        string jsonSubstring = errorMessage.Substring(jsonStart);
+                        var json = JObject.Parse(jsonSubstring);
+                        if (json.TryGetValue("message", StringComparison.OrdinalIgnoreCase, out JToken messageToken))
+                        {
+                            return messageToken.ToString();
+                        }
+                    }
+                }
+                else
+                {
+                    int firstBrace = errorMessage.IndexOf('{');
+                    if (firstBrace >= 0)
+                    {
+                        string jsonSubstring = errorMessage.Substring(firstBrace);
+                        var json = JObject.Parse(jsonSubstring);
+                        if (json.TryGetValue("message", StringComparison.OrdinalIgnoreCase, out JToken messageToken))
+                        {
+                            return messageToken.ToString();
+                        }
+                    }
+                }
+            }
+            catch (Exception parseEx)
+            {
+                Debug.LogWarning($"Failed to parse error message JSON: {parseEx.Message}");
+            }
+            return null;
+        }
     }
 }
