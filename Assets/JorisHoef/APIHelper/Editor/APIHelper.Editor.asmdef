@@ -1,0 +1,18 @@
+{
+    "name": "APIHelper.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:6d683a63b902b1c49b1befa61907d195"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
