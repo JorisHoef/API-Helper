@@ -1,0 +1,10 @@
+{
+  "name": "com.jorishoef.apihelper",
+  "displayName": "API-Helper",
+  "version": "1.0.0",
+  "description": "Simplify making API calls including responses and strong typing",
+  "unity": "2020.3",
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": ">=3.2.1"
+  }
+}
