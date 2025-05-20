@@ -18,7 +18,7 @@ namespace JorisHoef.APIHelper.Samples.MonoBehaviours
         [ContextMenu("Test POST")] private void TestPost() => _ = TestPostAsync();
         [ContextMenu("Test PUT")] private void TestPut() => _ = TestPutAsync();
         [ContextMenu("Test DELETE")] private void TestDelete() => _ = TestDeleteAsync();
-        [ContextMenu("Test DELETE Will FAIL")] private void TestDeleteFail() => _ = TestDeleteFailAsync();
+        [ContextMenu("Test DELETE, will fail")] private void TestDeleteFail() => _ = TestDeleteFailAsync();
 
         private async Task TestGetAllAsync()
         {
