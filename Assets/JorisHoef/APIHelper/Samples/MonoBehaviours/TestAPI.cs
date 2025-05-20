@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using JorisHoef.APIHelper.Samples.Models;
@@ -12,7 +11,6 @@ namespace JorisHoef.APIHelper.Samples.MonoBehaviours
         private const string MOCK_API_URL = "https://jsonplaceholder.typicode.com/posts";
         private const int ID_TO_UPDATE = 1;
 
-        //Add void entry-point methods since ContextMenu calls always have to return void, but we want our APICalls to return Task
         [ContextMenu("Test GET All")] private void TestGetAll() => _ = TestGetAllAsync();
         [ContextMenu("Test GET")] private void TestGet() => _ = TestGetAsync();
         [ContextMenu("Test POST")] private void TestPost() => _ = TestPostAsync();
@@ -22,111 +20,88 @@ namespace JorisHoef.APIHelper.Samples.MonoBehaviours
 
         private async Task TestGetAllAsync()
         {
-            try
+            var response = await ApiServices.GetAsync<List<PostsData>>(MOCK_API_URL, false);
+            if (response.IsSuccess)
             {
-                var response = await ApiServices.GetAsync<List<PostsData>>(MOCK_API_URL, false);
-                if (response.IsSuccess)
+                foreach (PostsData post in response.Data)
                 {
-                    foreach (PostsData post in response.Data)
-                    {
-                        Debug.Log($"GET All succeeded: Title={post.Title}, UserId={post.UserId}");
-                    }
+                    Debug.Log($"GET All succeeded: Title={post.Title}, UserId={post.UserId}");
                 }
-                else
-                    Debug.LogError($"GET All failed: {response.Exception}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestGetAllAsync: {ex}");
+                Debug.LogError($"GET All failed: {response.Exception}");
             }
         }
 
         private async Task TestGetAsync()
         {
             var endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
-            try
+            var response = await ApiServices.GetAsync<PostsData>(endPoint, false);
+            if (response.IsSuccess)
             {
-                var response = await ApiServices.GetAsync<PostsData>(endPoint, false);
-                if (response.IsSuccess)
-                    Debug.Log($"GET succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
-                else
-                    Debug.LogError($"GET failed: {response.Exception}");
+                Debug.Log($"GET succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestGetAsync: {ex}");
+                Debug.LogError($"GET failed: {response.Exception}");
             }
         }
 
         private async Task TestPostAsync()
         {
-            try
+            PostsData fakeData = PostsData.CreateFakePostsData(0, "I am Title of Post Created!", "I am Content of Post");
+            var response = await ApiServices.PostAsync<PostsData>(MOCK_API_URL, fakeData, false);
+            if (response.IsSuccess)
             {
-                PostsData fakeData =
-                        PostsData.CreateFakePostsData(0, "I am Title of Post Created!", "I am Content of Post");
-                var response = await ApiServices.PostAsync<PostsData>(MOCK_API_URL, fakeData, false);
-                if (response.IsSuccess)
-                    Debug.Log($"POST succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
-                else
-                    Debug.LogError($"POST failed: {response.Exception}");
+                Debug.Log($"POST succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestPostAsync: {ex}");
+                Debug.LogError($"POST failed: {response.Exception}");
             }
         }
 
         private async Task TestPutAsync()
         {
             var endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
-            try
+            PostsData fakeData = PostsData.UpdateFakePostsData(ID_TO_UPDATE, 0, "I am Title of PostData Updated!", "I am Content of PostData");
+            var response = await ApiServices.PutAsync<PostsData>(endPoint, fakeData, false);
+            if (response.IsSuccess)
             {
-                PostsData fakeData =
-                        PostsData.UpdateFakePostsData(ID_TO_UPDATE, 0, "I am Title of PostData Updated!",
-                                                      "I am Contentof PostData");
-                var response = await ApiServices.PutAsync<PostsData>(endPoint, fakeData, false);
-                if (response.IsSuccess)
-                    Debug.Log($"PUT succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
-                else
-                    Debug.LogError($"PUT failed: {response.Exception}");
+                Debug.Log($"PUT succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestPutAsync: {ex}");
+                Debug.LogError($"PUT failed: {response.Exception}");
             }
         }
 
         private async Task TestDeleteAsync()
         {
             var endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}";
-            try
+            var response = await ApiServices.DeleteAsync<PostsData>(endPoint, false);
+            if (response.IsSuccess)
             {
-                var response = await ApiServices.DeleteAsync<PostsData>(endPoint, false);
-                if (response.IsSuccess)
-                    Debug.Log($"DELETE succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
-                else
-                    Debug.LogError($"DELETE failed: {response.Exception}");
+                Debug.Log($"DELETE succeeded: Title={response.Data.Title}, UserId={response.Data.UserId}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestDeleteAsync: {ex}");
+                Debug.LogError($"DELETE failed: {response.Exception}");
             }
         }
 
         private async Task TestDeleteFailAsync()
         {
             var endPoint = $"{MOCK_API_URL}/{ID_TO_UPDATE}/123/123/123/123/123";
-            try
+            var response = await ApiServices.DeleteAsync<PostsData>(endPoint, false);
+            if (response.IsSuccess)
             {
-                var response = await ApiServices.DeleteAsync<PostsData>(endPoint, false);
-                if (response.IsSuccess)
-                    Debug.Log($"DELETE (fail test) succeeded unexpectedly: Title={response.Data.Title}, UserId={response.Data.UserId}");
-                else
-                    Debug.LogError($"DELETE (fail test) failed as expected: {response.Exception}");
+                Debug.Log($"DELETE (fail test) succeeded unexpectedly: Title={response.Data.Title}, UserId={response.Data.UserId}");
             }
-            catch (Exception ex)
+            else
             {
-                Debug.LogError($"Unhandled exception in TestDeleteFailAsync: {ex}");
+                Debug.LogError($"DELETE (fail test) failed as expected: {response.Exception}");
             }
         }
     }
