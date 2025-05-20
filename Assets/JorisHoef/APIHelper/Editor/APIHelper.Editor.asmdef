@@ -2,7 +2,7 @@
     "name": "APIHelper.Editor",
     "rootNamespace": "",
     "references": [
-        "GUID:6d683a63b902b1c49b1befa61907d195"
+        "GUID:cb34dac1110bcc54981fd2ebe4701b5d"
     ],
     "includePlatforms": [
         "Editor"
