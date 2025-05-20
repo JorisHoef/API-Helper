@@ -1,6 +1,6 @@
 using Newtonsoft.Json;
 
-namespace JorisHoef.APIHelper.Example.Models
+namespace JorisHoef.APIHelper.Samples.Models
 {
     public class PostsData
     {
