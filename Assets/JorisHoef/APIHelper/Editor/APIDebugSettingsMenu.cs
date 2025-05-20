@@ -9,8 +9,8 @@ namespace JorisHoef.APIHelper.Editor
     [InitializeOnLoad]
     public static class APIDebugSettingsMenu
     {
-        private const string MENU_PATH = "Develop-Options/Log Raw JSON";
-        private const string PREF_KEY   = "JorisHoef.APIHelper.LogRawJson";
+        private const string MENU_PATH = "JorisHoef/API-Helper/Log Raw JSON";
+        private const string PREF_KEY = "JorisHoef.APIHelper.LogRawJson";
     
         static APIDebugSettingsMenu()
         {
