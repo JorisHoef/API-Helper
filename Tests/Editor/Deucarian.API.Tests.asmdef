@@ -4,15 +4,18 @@
   "references": [
     "Deucarian.API",
     "Deucarian.API.Editor",
-    "Unity.Newtonsoft.Json"
+    "Newtonsoft.Json"
   ],
   "includePlatforms": [
     "Editor"
   ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
+  ],
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
