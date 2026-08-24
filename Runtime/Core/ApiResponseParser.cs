@@ -18,7 +18,10 @@ namespace Deucarian.API.Core
                                                      ApiTransportResponse response,
                                                      ApiResponseFormat responseFormat)
         {
-            TResponse data = ParseData<TResponse>(response, responseFormat);
+            TResponse data = ParseData<TResponse>(
+                    response,
+                    responseFormat,
+                    request?.JsonPropertyNamingOverride);
 
             return ApiResult<TResponse>.Success(data,
                                                 request?.Method ?? HttpMethod.GET,
@@ -28,7 +31,8 @@ namespace Deucarian.API.Core
         }
 
         private TResponse ParseData<TResponse>(ApiTransportResponse response,
-                                               ApiResponseFormat responseFormat)
+                                               ApiResponseFormat responseFormat,
+                                               Configuration.ApiJsonPropertyNamingPolicy? propertyNamingOverride)
         {
             Type responseType = typeof(TResponse);
             string body = response?.RawBody;
@@ -74,7 +78,9 @@ namespace Deucarian.API.Core
                         return default;
                     }
 
-                    return _serializer.Deserialize<TResponse>(body);
+                    return _serializer.Deserialize<TResponse>(
+                            body,
+                            propertyNamingOverride);
             }
         }
 

@@ -36,6 +36,13 @@ namespace Deucarian.API.Configuration
         [Tooltip("Response format for this endpoint. Auto infers from the generic response type.")]
         [SerializeField] private ApiResponseFormat responseFormat = ApiResponseFormat.Auto;
 
+        [Tooltip("Override the client JSON property-name casing for this endpoint only.")]
+        [SerializeField] private bool overrideJsonPropertyNaming;
+
+        [Tooltip("JSON property-name casing used when the endpoint override is enabled.")]
+        [SerializeField] private ApiJsonPropertyNamingPolicy jsonPropertyNaming =
+                ApiJsonPropertyNamingPolicy.SnakeCase;
+
         [Tooltip("Headers applied to requests created from this endpoint.")]
         [SerializeField] private List<ApiKeyValuePair> defaultHeaders = new List<ApiKeyValuePair>();
 
@@ -84,6 +91,20 @@ namespace Deucarian.API.Configuration
             set => responseFormat = value;
         }
 
+        /// <summary>Whether this endpoint overrides the client JSON naming policy.</summary>
+        public bool OverrideJsonPropertyNaming
+        {
+            get => overrideJsonPropertyNaming;
+            set => overrideJsonPropertyNaming = value;
+        }
+
+        /// <summary>JSON naming policy used when <see cref="OverrideJsonPropertyNaming"/> is true.</summary>
+        public ApiJsonPropertyNamingPolicy JsonPropertyNaming
+        {
+            get => jsonPropertyNaming;
+            set => jsonPropertyNaming = value;
+        }
+
         /// <summary>Headers applied to requests created from this endpoint.</summary>
         public List<ApiKeyValuePair> DefaultHeaders => defaultHeaders;
 
@@ -108,7 +129,11 @@ namespace Deucarian.API.Configuration
                                    timeoutOverrideSeconds > 0 ? (int?)timeoutOverrideSeconds : null,
                                    headers,
                                    query,
-                                   responseFormat);
+                                   responseFormat,
+                                   jsonPropertyNamingOverride:
+                                           overrideJsonPropertyNaming
+                                                   ? jsonPropertyNaming
+                                                   : (ApiJsonPropertyNamingPolicy?)null);
         }
 
         /// <summary>

@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.5.0 - 2026-08-24
+
+- Added a global JSON property-naming dropdown with `snake_case` as the default.
+- Added optional endpoint-level naming overrides for camelCase, PascalCase,
+  kebab-case, SCREAMING_SNAKE_CASE, and as-declared contracts.
+- Preserved explicit `JsonProperty` names and dictionary keys across all policies.
+
 ## 1.4.2 - 2026-08-19
 
 - Prevented both normal and Advanced connection-profile controls from editing

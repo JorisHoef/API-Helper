@@ -6,31 +6,50 @@ namespace Deucarian.API.Core
 {
     internal sealed class NewtonsoftApiSerializer : IApiSerializer
     {
+        private readonly ApiJsonSerializerOptions options;
+
         public NewtonsoftApiSerializer(ApiJsonSerializerOptions options = null)
         {
-            Settings = (options ?? new ApiJsonSerializerOptions()).CreateSettings();
+            this.options = options ?? new ApiJsonSerializerOptions();
+            Settings = this.options.CreateSettings();
         }
 
         public NewtonsoftApiSerializer(JsonSerializerSettings settings)
         {
+            options = null;
             Settings = settings ?? new ApiJsonSerializerOptions().CreateSettings();
         }
 
         public JsonSerializerSettings Settings { get; }
 
-        public string Serialize(object value)
+        public string Serialize(
+            object value,
+            ApiJsonPropertyNamingPolicy? propertyNamingOverride = null)
         {
-            return JsonConvert.SerializeObject(value, Settings);
+            return JsonConvert.SerializeObject(value, ResolveSettings(propertyNamingOverride));
         }
 
-        public T Deserialize<T>(string json)
+        public T Deserialize<T>(
+            string json,
+            ApiJsonPropertyNamingPolicy? propertyNamingOverride = null)
         {
-            return JsonConvert.DeserializeObject<T>(json, Settings);
+            return JsonConvert.DeserializeObject<T>(json, ResolveSettings(propertyNamingOverride));
         }
 
-        public object Deserialize(string json, Type type)
+        public object Deserialize(
+            string json,
+            Type type,
+            ApiJsonPropertyNamingPolicy? propertyNamingOverride = null)
         {
-            return JsonConvert.DeserializeObject(json, type, Settings);
+            return JsonConvert.DeserializeObject(json, type, ResolveSettings(propertyNamingOverride));
+        }
+
+        private JsonSerializerSettings ResolveSettings(
+            ApiJsonPropertyNamingPolicy? propertyNamingOverride)
+        {
+            return propertyNamingOverride.HasValue && options != null
+                    ? options.CreateSettings(propertyNamingOverride)
+                    : Settings;
         }
     }
 }

@@ -188,7 +188,10 @@ namespace Deucarian.API.Core
                     return Encoding.UTF8.GetBytes(request.Body?.ToString() ?? string.Empty);
 
                 case ApiRequestBodyFormat.Json:
-                    return Encoding.UTF8.GetBytes(_serializer.Serialize(request.Body));
+                    return Encoding.UTF8.GetBytes(
+                            _serializer.Serialize(
+                                request.Body,
+                                request.JsonPropertyNamingOverride));
 
                 case ApiRequestBodyFormat.MultipartForm:
                 default:
