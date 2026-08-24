@@ -1,5 +1,6 @@
 using System;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 using UnityEngine;
 
 namespace Deucarian.API.Configuration
@@ -10,11 +11,21 @@ namespace Deucarian.API.Configuration
     [Serializable]
     public sealed class ApiJsonSerializerOptions
     {
+        [Tooltip("Property-name casing used for JSON request and response DTOs. Explicit JsonProperty names always win.")]
+        [SerializeField] private ApiJsonPropertyNamingPolicy propertyNaming =
+                ApiJsonPropertyNamingPolicy.SnakeCase;
         [SerializeField] private NullValueHandling nullValueHandling = NullValueHandling.Ignore;
         [SerializeField] private DefaultValueHandling defaultValueHandling = DefaultValueHandling.Include;
         [SerializeField] private MissingMemberHandling missingMemberHandling = MissingMemberHandling.Ignore;
         [SerializeField] private ReferenceLoopHandling referenceLoopHandling = ReferenceLoopHandling.Ignore;
         [SerializeField] private Formatting formatting = Formatting.None;
+
+        /// <summary>Controls the default casing of JSON DTO property names.</summary>
+        public ApiJsonPropertyNamingPolicy PropertyNaming
+        {
+            get => propertyNaming;
+            set => propertyNaming = value;
+        }
 
         /// <summary>Controls whether null values are included in serialized JSON.</summary>
         public NullValueHandling NullValueHandling
@@ -57,8 +68,26 @@ namespace Deucarian.API.Configuration
         /// <returns>A new <see cref="JsonSerializerSettings"/> instance.</returns>
         public JsonSerializerSettings CreateSettings()
         {
+            return CreateSettings(null);
+        }
+
+        /// <summary>
+        /// Creates runtime Newtonsoft settings, optionally overriding only the property naming policy.
+        /// </summary>
+        /// <param name="propertyNamingOverride">Per-request naming policy, or null for the configured default.</param>
+        /// <returns>A new <see cref="JsonSerializerSettings"/> instance.</returns>
+        public JsonSerializerSettings CreateSettings(
+            ApiJsonPropertyNamingPolicy? propertyNamingOverride)
+        {
+            ApiJsonPropertyNamingPolicy effectiveNaming =
+                    propertyNamingOverride ?? propertyNaming;
             return new JsonSerializerSettings
             {
+                    ContractResolver = new DefaultContractResolver
+                    {
+                            NamingStrategy =
+                                    ApiJsonPropertyNamingStrategyFactory.Create(effectiveNaming)
+                    },
                     NullValueHandling = nullValueHandling,
                     DefaultValueHandling = defaultValueHandling,
                     MissingMemberHandling = missingMemberHandling,

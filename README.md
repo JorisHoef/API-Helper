@@ -211,7 +211,7 @@ else
 | `TimeoutSeconds` | Default request timeout. `0` lets UnityWebRequest use its default behavior. |
 | `AuthenticationMode` | Default auth mode for requests using `UseConfigDefault`. |
 | `AuthProvider` | Optional ScriptableObject token provider. |
-| `JsonSerializerSettings` | Newtonsoft JSON options. |
+| `JsonSerializerSettings` | Newtonsoft JSON options, including the global property-naming dropdown. Defaults to `snake_case`; explicit `JsonProperty` names always win. |
 | `DefaultResponseFormat` | Response format fallback. Keep `Auto` for most projects. |
 | `CertificateHandlingMode` | TLS/certificate behavior. `DefaultValidation` is the production default. |
 | `LoggingMode` | Controls API logging. |
@@ -710,7 +710,7 @@ decoders that cannot be handled cleanly with `string` or `byte[]`.
 
 ## Versioning
 
-Current package version: `1.4.2`.
+Current package version: `1.5.0`.
 
 Branch strategy:
 

@@ -3,15 +3,19 @@
   "rootNamespace": "Deucarian.API.Tests",
   "references": [
     "Deucarian.API",
-    "Deucarian.API.Editor"
+    "Deucarian.API.Editor",
+    "Newtonsoft.Json"
   ],
   "includePlatforms": [
     "Editor"
   ],
   "excludePlatforms": [],
   "allowUnsafeCode": false,
-  "overrideReferences": false,
-  "precompiledReferences": [],
+  "overrideReferences": true,
+  "precompiledReferences": [
+    "nunit.framework.dll",
+    "Newtonsoft.Json.dll"
+  ],
   "autoReferenced": true,
   "defineConstraints": [],
   "versionDefines": [],
