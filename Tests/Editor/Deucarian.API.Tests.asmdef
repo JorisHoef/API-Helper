@@ -3,7 +3,8 @@
   "rootNamespace": "Deucarian.API.Tests",
   "references": [
     "Deucarian.API",
-    "Deucarian.API.Editor"
+    "Deucarian.API.Editor",
+    "Unity.Newtonsoft.Json"
   ],
   "includePlatforms": [
     "Editor"
