@@ -105,6 +105,11 @@ namespace Deucarian.API.Models
         public ApiResponseFormat ResponseFormat { get; set; } = ApiResponseFormat.Auto;
 
         /// <summary>
+        /// Optional JSON property-name casing override. Null uses the client configuration.
+        /// </summary>
+        public ApiJsonPropertyNamingPolicy? JsonPropertyNamingOverride { get; set; }
+
+        /// <summary>
         /// Optional AssetBundle transport options used when <see cref="ResponseFormat"/> resolves to
         /// <see cref="ApiResponseFormat.AssetBundle"/>.
         /// </summary>

@@ -34,6 +34,7 @@ namespace Deucarian.API.Models
         /// <param name="responseFormat">Optional response format hint. Auto infers from the generic response type.</param>
         /// <param name="requestPolicy">Optional resolved request policy metadata.</param>
         /// <param name="suppressLogging">True when requests created from this endpoint must not reach API logs.</param>
+        /// <param name="jsonPropertyNamingOverride">Optional request/response DTO naming override.</param>
         public ApiEndpoint(string path,
                            HttpMethod method = HttpMethod.GET,
                            ApiAuthenticationRequirement authentication =
@@ -43,7 +44,8 @@ namespace Deucarian.API.Models
                            IEnumerable<KeyValuePair<string, string>> defaultQueryParameters = null,
                            ApiResponseFormat responseFormat = ApiResponseFormat.Auto,
                            ApiRequestPolicy requestPolicy = null,
-                           bool suppressLogging = false)
+                           bool suppressLogging = false,
+                           ApiJsonPropertyNamingPolicy? jsonPropertyNamingOverride = null)
         {
             Path = path;
             Method = method;
@@ -54,6 +56,7 @@ namespace Deucarian.API.Models
             ResponseFormat = responseFormat;
             RequestPolicy = requestPolicy;
             SuppressLogging = suppressLogging;
+            JsonPropertyNamingOverride = jsonPropertyNamingOverride;
         }
 
         /// <summary>Relative path or absolute URL. Supports placeholders such as <c>projects/{id}</c>.</summary>
@@ -83,6 +86,9 @@ namespace Deucarian.API.Models
         /// <summary>True when requests created from this endpoint must not reach API logs.</summary>
         public bool SuppressLogging { get; }
 
+        /// <summary>Optional request/response DTO naming override.</summary>
+        public ApiJsonPropertyNamingPolicy? JsonPropertyNamingOverride { get; }
+
         /// <summary>
         /// Creates a request from this endpoint. Throws if the path still contains unresolved placeholders.
         /// </summary>
@@ -98,7 +104,8 @@ namespace Deucarian.API.Models
                     TimeoutSeconds = TimeoutSeconds,
                     ResponseFormat = ResponseFormat,
                     RequestPolicy = RequestPolicy,
-                    SuppressLogging = SuppressLogging
+                    SuppressLogging = SuppressLogging,
+                    JsonPropertyNamingOverride = JsonPropertyNamingOverride
             };
 
             CopyInto(DefaultHeaders, request.Headers);
@@ -170,7 +177,8 @@ namespace Deucarian.API.Models
                                    DefaultQueryParameters,
                                    ResponseFormat,
                                    RequestPolicy,
-                                   SuppressLogging);
+                                   SuppressLogging,
+                                   JsonPropertyNamingOverride);
         }
 
         /// <summary>Returns a copy with an extra default query parameter.</summary>
@@ -190,7 +198,8 @@ namespace Deucarian.API.Models
                                    query,
                                    ResponseFormat,
                                    RequestPolicy,
-                                   SuppressLogging);
+                                   SuppressLogging,
+                                   JsonPropertyNamingOverride);
         }
 
         private ApiEndpoint WithPath(string path)
@@ -203,7 +212,8 @@ namespace Deucarian.API.Models
                                    DefaultQueryParameters,
                                    ResponseFormat,
                                    RequestPolicy,
-                                   SuppressLogging);
+                                   SuppressLogging,
+                                   JsonPropertyNamingOverride);
         }
 
         internal static bool HasUnresolvedPathParameters(string path)
