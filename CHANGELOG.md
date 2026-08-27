@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0 - 2026-08-26
+
+- Updated the exact Logging dependency to 1.0.3 for the coordinated editor UX
+  release.
+- Replaced `ApiConnectionProfile` with the single project-owned
+  `ApiConnectionSettings` concept.
+- Added package-owned `ApiServiceDefinition` contracts with typed service,
+  environment, client, catalog, and endpoint identities plus source provenance.
+- Removed normal asset menus for internal environment and endpoint building
+  blocks; integrations now create complete service-aware settings explicitly.
+- Removed duplicated known-environment metadata from project connection assets.
+
 ## 1.5.0 - 2026-08-24
 
 - Added a global JSON property-naming dropdown with `snake_case` as the default.
