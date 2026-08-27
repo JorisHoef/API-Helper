@@ -90,7 +90,6 @@ namespace Deucarian.API.Configuration
     /// A vendor-neutral API environment profile. It maps stable named clients to environment-specific
     /// base URLs without storing active selection or authentication/session state.
     /// </summary>
-    [CreateAssetMenu(menuName = "Deucarian/API/Advanced/Building Blocks/Environment Profile", fileName = "ApiEnvironmentProfile")]
     public sealed class ApiEnvironmentProfile : ScriptableObject
     {
         [Tooltip("Stable environment identifier such as 'development', 'acceptance', or 'production'.")]

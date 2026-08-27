@@ -126,7 +126,6 @@ namespace Deucarian.API.Configuration
     /// Vendor-neutral route catalog. It owns stable endpoint IDs and request metadata while environment
     /// profiles own concrete hosts.
     /// </summary>
-    [CreateAssetMenu(menuName = "Deucarian/API/Advanced/Building Blocks/Endpoint Catalog", fileName = "ApiEndpointCatalog")]
     public sealed class ApiEndpointCatalog : ScriptableObject
     {
         [Tooltip("Stable catalog identifier, for example 'building-api.v2'.")]

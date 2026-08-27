@@ -109,10 +109,11 @@ The main runtime APIs are:
 - `IApiClient`: injectable client used by application services.
 - `ApiClientFactory`: creates the default client pipeline from `ApiClientConfig`.
 - `ApiClientConfig`: ScriptableObject config for base URL, default headers, timeout, auth, JSON settings, certificate handling, response format, and logging.
-- `ApiConnectionProfile`: project-facing ScriptableObject that combines environment hosts, known-environment metadata, and one endpoint contract.
-- `ApiEnvironmentId`, `ApiClientId`, `ApiCatalogId`, and `ApiEndpointId`: stable serializable identifiers used across package boundaries.
-- `ApiEnvironmentProfile`: environment-specific named clients, base URLs, headers, and policy defaults.
-- `ApiEndpointCatalog`: stable endpoint IDs, named-client references, relative route templates, methods, auth requirements, response formats, headers, query defaults, policy overlays, and sensitive-call logging suppression.
+- `ApiConnectionSettings`: project-owned ScriptableObject containing deployment hosts and safe policy overrides for one service definition.
+- `ApiServiceDefinition`: package-owned, credential-free service identity, environment/client contract, endpoint catalog, and source provenance.
+- `ApiEnvironmentId`, `ApiClientId`, `ApiServiceId`, `ApiCatalogId`, and `ApiEndpointId`: stable serializable identifiers used across package boundaries.
+- `ApiEnvironmentProfile`: managed connection sub-asset with named-client base URLs and policy defaults.
+- `ApiEndpointCatalog`: definition-owned stable endpoint IDs, relative route templates, methods, auth requirements, and sensitive-call logging suppression.
 - `ApiComposition`: resolves an explicit environment and endpoint ID into the existing `ApiEndpoint`/`ApiRequest` pipeline.
 - `ApiEnvironmentStatus`: sanitized resolution state for UI that intentionally omits hosts and headers.
 - `ApiRequestPolicy` and `ApiRequestPolicyDefinition`: resolved policy values and serializable layered overrides.
@@ -240,28 +241,21 @@ and images.
 
 ## Environment And Endpoint Composition
 
-Environment profiles own concrete hosts. Endpoint catalogs own logical routes and
-request metadata. `ApiConnectionProfile` is the project-facing aggregate that keeps
-those two responsibilities together without storing credentials or an active
-environment. A viewer's persisted selection remains small and safe: store an
-`ApiEnvironmentId`, then resolve it through the connection profile when composing the
-API service. Do not copy base URLs into viewer command/context payloads and do not use
-a global active-environment value.
+`ApiServiceDefinition` owns the credential-free contract: service identity,
+known environments, required named clients, endpoint catalog, and source
+fingerprint. `ApiConnectionSettings` owns only project deployment hosts and safe
+policy overrides. It stores no credential or active environment.
 
-Create the normal project asset from:
+Create settings through an installed integration's explicit setup action, for
+example `Assets > Create > Deucarian > Connections > Simultria Connection
+Settings`, or through `Tools > Deucarian > Project Setup`. The integration
+supplies its service definition and the factory creates every required managed
+environment/client slot with blank hosts. Missing hosts remain visible as
+**Missing** and fail closed.
 
-`Assets > Create > Deucarian > API > Connection Profile`
-
-The factory creates one root asset with Development, Testing, Acceptance, and
-Production sub-assets. Each contains a `primary` client with a blank Base URL. It does
-not invent deployment hosts or an endpoint catalog. Assign a package-managed catalog
-from an integration package, or create a project-owned contract when the project owns
-the API. Empty environment slots are shown as **Not configured** and fail closed.
-
-Manual authoring remains available under `Assets > Create > Deucarian > API >
-Advanced > Building Blocks` for custom transports and integration-package
-development. Existing raw assets remain compatible; only their creation-menu
-location changed.
+Environment profiles and endpoint catalogs have no normal asset creation menu.
+Custom integrations may construct them through their own advanced tooling, but
+ordinary project setup never asks developers to author internal building blocks.
 
 An environment profile can define clients such as `primary`, `media`, or `telemetry`.
 Every environment uses the same client IDs but supplies its own base URLs. A catalog
@@ -710,7 +704,7 @@ decoders that cannot be handled cleanly with `string` or `byte[]`.
 
 ## Versioning
 
-Current package version: `1.5.0`.
+Current package version: `2.0.0`.
 
 Branch strategy:
 
