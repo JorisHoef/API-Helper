@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using Deucarian.API.Authentication;
@@ -473,7 +474,9 @@ namespace Deucarian.API.Tests
 
             LogAssert.Expect(
                 LogType.Error,
-                "[Api.Requests] Error 200 https://example.com/bundles/model: AssetBundle response could not be decoded for https://example.com/bundles/model.");
+                new Regex(
+                    "AssetBundle response could not be decoded for " +
+                    "https://example\\.com/bundles/model\\."));
             ApiResult<AssetBundle> result =
                     client.GetAsync<AssetBundle>("bundles/model", CancellationToken.None)
                           .GetAwaiter()

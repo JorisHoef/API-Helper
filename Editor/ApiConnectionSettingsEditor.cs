@@ -8,7 +8,7 @@ using UnityEngine;
 
 namespace Deucarian.API.Editor
 {
-    internal enum ApiConnectionCatalogOwnership
+    internal enum ApiServiceDefinitionOwnership
     {
         Missing = 0,
         ProjectOwned = 1,
@@ -16,138 +16,140 @@ namespace Deucarian.API.Editor
         External = 3
     }
 
-    [CustomEditor(typeof(ApiConnectionProfile))]
-    internal sealed class ApiConnectionProfileEditor : UnityEditor.Editor
+    [CustomEditor(typeof(ApiConnectionSettings))]
+    internal sealed class ApiConnectionSettingsEditor : UnityEditor.Editor
     {
         private bool showAdvanced;
 
         public override void OnInspectorGUI()
         {
-            var profile = (ApiConnectionProfile)target;
-            bool projectOwned = IsProjectOwned(profile);
+            var settings = (ApiConnectionSettings)target;
+            bool projectOwned = IsProjectOwned(settings);
 
             EditorGUILayout.LabelField(
-                "API Connection Profile",
+                "API Connection Settings",
                 EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                "Configure project-owned environment hosts here. The endpoint " +
-                "catalog defines the shared contract: routes, methods, and " +
-                "authentication rules.",
+                "This project owns deployment hosts. The referenced service " +
+                "definition owns stable environments, named clients, routes, " +
+                "methods, and authentication requirements.",
                 EditorStyles.wordWrappedLabel);
             EditorGUILayout.Space();
 
-            DrawCatalog(profile, projectOwned);
+            DrawServiceDefinition(settings);
             EditorGUILayout.Space();
-            DrawEnvironments(profile, projectOwned);
+            DrawEnvironments(settings, projectOwned);
             EditorGUILayout.Space();
-            DrawAdvanced(profile, projectOwned);
+            DrawAdvanced(settings, projectOwned);
 
             if (!projectOwned)
             {
                 EditorGUILayout.Space();
                 EditorGUILayout.HelpBox(
-                    "This profile is package-managed or transient and is shown " +
-                    "read-only. Create a project profile from Assets > Create > " +
-                    "Deucarian > API > Connection Profile to configure hosts.",
+                    "Package-managed and transient connection settings are " +
+                    "read-only. Use the integration's explicit setup action " +
+                    "to create project-owned settings.",
                     MessageType.Info);
             }
         }
 
-        private void DrawCatalog(
-            ApiConnectionProfile profile,
-            bool projectOwned)
+        private void DrawServiceDefinition(ApiConnectionSettings settings)
         {
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField(
-                    "API Contract",
-                    EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("API Service", EditorStyles.boldLabel);
                 serializedObject.Update();
-                SerializedProperty catalogProperty =
-                    serializedObject.FindProperty("endpointCatalog");
-                using (new EditorGUI.DisabledScope(!projectOwned))
+                SerializedProperty property =
+                    serializedObject.FindProperty("serviceDefinition");
+                using (new EditorGUI.DisabledScope(true))
                 {
                     EditorGUILayout.PropertyField(
-                        catalogProperty,
-                        new GUIContent("Endpoint Catalog"));
+                        property,
+                        new GUIContent("Service Definition"));
                 }
 
-                serializedObject.ApplyModifiedProperties();
-
-                ApiConnectionCatalogOwnership ownership =
-                    GetCatalogOwnership(profile.EndpointCatalog);
+                ApiServiceDefinition definition = settings.ServiceDefinition;
+                ApiServiceDefinitionOwnership ownership =
+                    GetDefinitionOwnership(definition);
                 switch (ownership)
                 {
-                    case ApiConnectionCatalogOwnership.PackageManaged:
+                    case ApiServiceDefinitionOwnership.PackageManaged:
                         DrawState(
-                            "Package managed",
-                            "Routes, methods, and authentication rules come from " +
-                            "the referenced package. Configure only environment " +
-                            "hosts below.",
+                            "Package",
+                            "The installed integration owns this generated, " +
+                            "credential-free contract.",
                             DeucarianEditorStatus.Success,
                             MessageType.Info);
                         break;
-                    case ApiConnectionCatalogOwnership.ProjectOwned:
+                    case ApiServiceDefinitionOwnership.ProjectOwned:
                         DrawState(
-                            "Project owned",
-                            "This project owns both the endpoint contract and its " +
-                            "environment hosts.",
-                            DeucarianEditorStatus.Info,
-                            MessageType.Info);
+                            "Project override",
+                            "This project forks the package contract. Updates " +
+                            "must be reviewed and applied explicitly.",
+                            DeucarianEditorStatus.Warning,
+                            MessageType.Warning);
                         break;
-                    case ApiConnectionCatalogOwnership.External:
+                    case ApiServiceDefinitionOwnership.External:
                         DrawState(
-                            "Runtime reference",
-                            "The endpoint catalog is not a project or package asset.",
+                            "Runtime",
+                            "The service definition is not a project or package asset.",
                             DeucarianEditorStatus.Info,
                             MessageType.Info);
                         break;
                     default:
                         DrawState(
-                            "Not assigned",
-                            "Assign an integration package's catalog or create a " +
-                            "project-owned catalog from Advanced > Building " +
-                            "Blocks in the API menu.",
-                            DeucarianEditorStatus.Warning,
-                            MessageType.Warning);
+                            "Missing",
+                            "Open Project Setup and select an installed API integration.",
+                            DeucarianEditorStatus.Error,
+                            MessageType.Error);
                         break;
+                }
+
+                if (definition != null)
+                {
+                    EditorGUILayout.LabelField(
+                        "Service ID",
+                        definition.ServiceId ?? string.Empty);
+                    EditorGUILayout.LabelField(
+                        "Source version",
+                        string.IsNullOrWhiteSpace(definition.SourceVersion)
+                            ? "Not provided"
+                            : definition.SourceVersion);
                 }
             }
         }
 
         private static void DrawEnvironments(
-            ApiConnectionProfile profile,
+            ApiConnectionSettings settings,
             bool projectOwned)
         {
-            EditorGUILayout.LabelField(
-                "Environments",
-                EditorStyles.boldLabel);
-            if (!profile.TryGetKnownEnvironmentDescriptors(
-                    out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
-                    out string descriptorError))
+            EditorGUILayout.LabelField("Environments", EditorStyles.boldLabel);
+            ApiServiceDefinition definition = settings.ServiceDefinition;
+            if (definition == null)
             {
-                EditorGUILayout.HelpBox(descriptorError, MessageType.Error);
+                EditorGUILayout.HelpBox(
+                    "A service definition is required.",
+                    MessageType.Error);
                 return;
             }
 
-            if (descriptors.Count == 0)
+            if (!definition.TryGetEnvironmentDescriptors(
+                    out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
+                    out string error))
             {
-                EditorGUILayout.HelpBox(
-                    "No known environments are defined. Use Advanced to attach " +
-                    "environment profiles and descriptor metadata.",
-                    MessageType.Info);
+                EditorGUILayout.HelpBox(error, MessageType.Error);
                 return;
             }
 
             foreach (ApiEnvironmentDescriptor descriptor in descriptors)
             {
-                DrawEnvironment(profile, descriptor, projectOwned);
+                DrawEnvironment(settings, descriptor, projectOwned);
                 EditorGUILayout.Space(2f);
             }
         }
 
         private static void DrawEnvironment(
-            ApiConnectionProfile profile,
+            ApiConnectionSettings settings,
             ApiEnvironmentDescriptor descriptor,
             bool projectOwned)
         {
@@ -166,33 +168,22 @@ namespace Deucarian.API.Editor
                 }
 
                 ApiEnvironmentProfile environment = FindEnvironment(
-                    profile.Environments,
+                    settings.Environments,
                     descriptor.EnvironmentId);
                 if (environment == null)
                 {
                     DrawState(
-                        "Missing slot",
-                        "No environment profile is attached for '" +
+                        "Missing",
+                        "Open Project Setup to repair environment '" +
                         descriptor.EnvironmentId + "'.",
                         DeucarianEditorStatus.Error,
                         MessageType.Error);
                     return;
                 }
 
-                if (!TryGetNamedClients(
-                        environment,
-                        out IReadOnlyList<ApiNamedClientDefinition> clients))
-                {
-                    DrawState(
-                        "Advanced setup",
-                        "This environment has no named clients. Configure at " +
-                        "least one under Advanced.",
-                        DeucarianEditorStatus.Warning,
-                        MessageType.Warning);
-                    return;
-                }
-
-                bool canEdit = CanEditEnvironment(profile, environment);
+                IReadOnlyList<ApiNamedClientDefinition> clients =
+                    environment.Clients;
+                bool canEdit = projectOwned && IsProjectOwned(environment);
                 for (int index = 0; index < clients.Count; index++)
                 {
                     ApiNamedClientDefinition client = clients[index];
@@ -228,21 +219,21 @@ namespace Deucarian.API.Editor
                     case ApiEnvironmentProfileConfigurationState.Configured:
                         DrawState(
                             "Configured",
-                            "This environment has a valid absolute HTTP(S) host.",
+                            "Every required client has a valid HTTP(S) base URL.",
                             DeucarianEditorStatus.Success,
                             MessageType.Info);
                         break;
                     case ApiEnvironmentProfileConfigurationState.NotConfigured:
                         DrawState(
-                            "Not configured",
-                            "No requests can resolve here until a Base URL is entered.",
+                            "Missing",
+                            "Requests remain blocked until all required hosts are configured.",
                             DeucarianEditorStatus.Warning,
                             MessageType.Info);
                         break;
                     default:
                         DrawState(
                             "Invalid",
-                            message ?? "This environment configuration is invalid.",
+                            message ?? "This environment is invalid.",
                             DeucarianEditorStatus.Error,
                             MessageType.Error);
                         break;
@@ -251,12 +242,12 @@ namespace Deucarian.API.Editor
         }
 
         private void DrawAdvanced(
-            ApiConnectionProfile profile,
+            ApiConnectionSettings settings,
             bool projectOwned)
         {
             showAdvanced = EditorGUILayout.Foldout(
                 showAdvanced,
-                "Advanced identifiers and policies",
+                "Advanced policies",
                 true);
             if (!showAdvanced)
             {
@@ -264,26 +255,13 @@ namespace Deucarian.API.Editor
             }
 
             EditorGUILayout.HelpBox(
-                "Manual authoring is supported for custom integrations. Keep " +
-                "descriptor IDs aligned with their environment profiles and " +
-                "never store credentials in headers.",
+                "Identifiers are managed by the service definition. Do not " +
+                "store credentials or secret headers in this asset.",
                 MessageType.Info);
-
             using (new EditorGUI.DisabledScope(!projectOwned))
             {
-                serializedObject.Update();
-                EditorGUILayout.PropertyField(
-                    serializedObject.FindProperty("knownEnvironmentDefinitions"),
-                    new GUIContent("Known Environments"),
-                    true);
-                EditorGUILayout.PropertyField(
-                    serializedObject.FindProperty("environments"),
-                    new GUIContent("Environment Profiles"),
-                    true);
-                serializedObject.ApplyModifiedProperties();
-
                 foreach (ApiEnvironmentProfile environment in
-                         profile.Environments)
+                    settings.Environments)
                 {
                     if (environment == null)
                     {
@@ -294,16 +272,13 @@ namespace Deucarian.API.Editor
                     EditorGUILayout.LabelField(
                         environment.DisplayName ?? environment.name,
                         EditorStyles.boldLabel);
-                    bool environmentOwned =
-                        CanEditEnvironment(profile, environment);
-                    using (new EditorGUI.DisabledScope(!environmentOwned))
+                    using (new EditorGUI.DisabledScope(
+                               !IsProjectOwned(environment)))
                     {
-                        var environmentObject =
-                            new SerializedObject(environment);
+                        var environmentObject = new SerializedObject(environment);
                         environmentObject.Update();
                         EditorGUILayout.PropertyField(
-                            environmentObject.FindProperty(
-                                "defaultRequestPolicy"),
+                            environmentObject.FindProperty("defaultRequestPolicy"),
                             new GUIContent("Environment Policy"),
                             true);
                         EditorGUILayout.PropertyField(
@@ -311,14 +286,6 @@ namespace Deucarian.API.Editor
                             new GUIContent("Named Clients"),
                             true);
                         environmentObject.ApplyModifiedProperties();
-                    }
-
-                    if (!environmentOwned)
-                    {
-                        EditorGUILayout.HelpBox(
-                            "This referenced environment is package-managed " +
-                            "or transient and remains read-only.",
-                            MessageType.Info);
                     }
                 }
             }
@@ -344,14 +311,6 @@ namespace Deucarian.API.Editor
             return null;
         }
 
-        internal static bool TryGetNamedClients(
-            ApiEnvironmentProfile environment,
-            out IReadOnlyList<ApiNamedClientDefinition> clients)
-        {
-            clients = environment?.Clients;
-            return clients != null && clients.Count > 0;
-        }
-
         internal static string GetBaseUrlLabel(
             ApiNamedClientDefinition client,
             int clientCount)
@@ -365,13 +324,6 @@ namespace Deucarian.API.Editor
             return string.IsNullOrWhiteSpace(clientId)
                 ? "Client Base URL"
                 : clientId + " Base URL";
-        }
-
-        internal static bool CanEditEnvironment(
-            ApiConnectionProfile profile,
-            ApiEnvironmentProfile environment)
-        {
-            return IsProjectOwned(profile) && IsProjectOwned(environment);
         }
 
         private static void DrawState(
@@ -392,29 +344,29 @@ namespace Deucarian.API.Editor
             EditorGUILayout.HelpBox(message, messageType);
         }
 
-        internal static ApiConnectionCatalogOwnership GetCatalogOwnership(
-            ApiEndpointCatalog catalog)
+        internal static ApiServiceDefinitionOwnership GetDefinitionOwnership(
+            ApiServiceDefinition definition)
         {
-            if (catalog == null)
+            if (definition == null)
             {
-                return ApiConnectionCatalogOwnership.Missing;
+                return ApiServiceDefinitionOwnership.Missing;
             }
 
-            string path = AssetDatabase.GetAssetPath(catalog)
+            string path = AssetDatabase.GetAssetPath(definition)
                 ?.Replace('\\', '/');
             if (string.IsNullOrWhiteSpace(path))
             {
-                return ApiConnectionCatalogOwnership.External;
+                return ApiServiceDefinitionOwnership.External;
             }
 
             if (path.StartsWith("Packages/", StringComparison.Ordinal))
             {
-                return ApiConnectionCatalogOwnership.PackageManaged;
+                return ApiServiceDefinitionOwnership.PackageManaged;
             }
 
             return path.StartsWith("Assets/", StringComparison.Ordinal)
-                ? ApiConnectionCatalogOwnership.ProjectOwned
-                : ApiConnectionCatalogOwnership.External;
+                ? ApiServiceDefinitionOwnership.ProjectOwned
+                : ApiServiceDefinitionOwnership.External;
         }
 
         private static bool IsProjectOwned(UnityEngine.Object value)
@@ -422,7 +374,7 @@ namespace Deucarian.API.Editor
             string path = AssetDatabase.GetAssetPath(value)
                 ?.Replace('\\', '/');
             return !string.IsNullOrWhiteSpace(path) &&
-                   path.StartsWith("Assets/", StringComparison.Ordinal);
+                path.StartsWith("Assets/", StringComparison.Ordinal);
         }
     }
 }

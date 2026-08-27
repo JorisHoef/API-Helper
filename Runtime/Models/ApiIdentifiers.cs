@@ -137,6 +137,55 @@ namespace Deucarian.API.Models
         public static bool operator !=(ApiClientId left, ApiClientId right) => !left.Equals(right);
     }
 
+    /// <summary>A stable, serializable identifier for an API service.</summary>
+    [Serializable]
+    public struct ApiServiceId : IEquatable<ApiServiceId>
+    {
+        [SerializeField] private string value;
+
+        /// <summary>Creates a validated service identifier.</summary>
+        public ApiServiceId(string value)
+        {
+            this.value = ApiIdentifierUtility.Parse(value, nameof(value));
+        }
+
+        /// <summary>The normalized identifier value.</summary>
+        public string Value => value ?? string.Empty;
+
+        /// <summary>True when this is the default, unassigned identifier.</summary>
+        public bool IsEmpty => string.IsNullOrEmpty(value);
+
+        /// <summary>Attempts to parse a stable service identifier.</summary>
+        public static bool TryParse(string candidate, out ApiServiceId identifier)
+        {
+            if (ApiIdentifierUtility.TryNormalize(candidate, out string normalized))
+            {
+                identifier = new ApiServiceId { value = normalized };
+                return true;
+            }
+
+            identifier = default(ApiServiceId);
+            return false;
+        }
+
+        public bool Equals(ApiServiceId other) =>
+            string.Equals(value, other.value, StringComparison.Ordinal);
+
+        public override bool Equals(object obj) =>
+            obj is ApiServiceId other && Equals(other);
+
+        public override int GetHashCode() =>
+            value == null ? 0 : StringComparer.Ordinal.GetHashCode(value);
+
+        public override string ToString() => Value;
+
+        public static bool operator ==(ApiServiceId left, ApiServiceId right) =>
+            left.Equals(right);
+
+        public static bool operator !=(ApiServiceId left, ApiServiceId right) =>
+            !left.Equals(right);
+    }
+
     /// <summary>A stable, serializable identifier for an endpoint catalog.</summary>
     [Serializable]
     public struct ApiCatalogId : IEquatable<ApiCatalogId>
