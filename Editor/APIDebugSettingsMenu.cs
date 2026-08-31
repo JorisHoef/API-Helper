@@ -1,18 +1,14 @@
 using Deucarian.API;
-using Deucarian.Editor;
 using UnityEditor;
 
 namespace Deucarian.API.Editor
 {
     /// <summary>
-    /// Toggle APIDebugSettings.LogRawJson from the Unity top menu.
+    /// Persists the advanced raw-JSON preference used by Control Center.
     /// </summary>
     [InitializeOnLoad]
     public static class APIDebugSettingsMenu
     {
-        private const string MENU_ROOT = DeucarianEditorUxStandards.MenuRoot + "/Runtime Services/API/";
-
-        private const string MENU_ITEM = MENU_ROOT + "Log Raw JSON";
         private const string PREF_KEY  = "Deucarian.API.LogRawJson";
 
         static APIDebugSettingsMenu()
@@ -21,8 +17,10 @@ namespace Deucarian.API.Editor
             APIDebugSettings.LogRawJson = storedValue;
         }
 
-        [MenuItem(MENU_ITEM)]
-        private static void ToggleLogRawJson()
+        internal static bool LogRawJsonEnabled =>
+            EditorPrefs.GetBool(PREF_KEY, APIDebugSettings.LogRawJson);
+
+        internal static void ToggleLogRawJson()
         {
             bool newValue = !EditorPrefs.GetBool(PREF_KEY, false);
             EditorPrefs.SetBool(PREF_KEY, newValue);
@@ -30,11 +28,5 @@ namespace Deucarian.API.Editor
             ApiLog.General.Info($"APIDebugSettings.LogRawJson is now: {newValue}");
         }
 
-        [MenuItem(MENU_ITEM, true)]
-        private static bool ToggleLogRawJsonValidate()
-        {
-            Menu.SetChecked(MENU_ITEM, EditorPrefs.GetBool(PREF_KEY, false));
-            return true;
-        }
     }
 }
