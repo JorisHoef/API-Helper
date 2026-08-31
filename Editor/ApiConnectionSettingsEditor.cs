@@ -99,7 +99,7 @@ namespace Deucarian.API.Editor
                     default:
                         DrawState(
                             "Missing",
-                            "Open Project Setup and select an installed API integration.",
+                            "Open Deucarian Control Center and select an installed API integration.",
                             DeucarianEditorStatus.Error,
                             MessageType.Error);
                         break;
@@ -174,7 +174,7 @@ namespace Deucarian.API.Editor
                 {
                     DrawState(
                         "Missing",
-                        "Open Project Setup to repair environment '" +
+                        "Open Deucarian Control Center to repair environment '" +
                         descriptor.EnvironmentId + "'.",
                         DeucarianEditorStatus.Error,
                         MessageType.Error);

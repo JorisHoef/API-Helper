@@ -1,9 +1,11 @@
 using System;
+using System.IO;
 using System.Linq;
 using Deucarian.API.Configuration;
 using Deucarian.API.Core;
 using Deucarian.API.Editor;
 using Deucarian.API.Models;
+using Deucarian.Editor;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -22,6 +24,42 @@ namespace Deucarian.API.Tests
             TestDirectory + "/ServiceDefinition.asset";
         private static readonly ApiClientId PrimaryClientId =
             new ApiClientId("primary");
+
+        [Test]
+        public void ControlCenterCard_ReportsOnlySanitizedConnectionCounts()
+        {
+            DeucarianControlCenterCard card =
+                ApiControlCenterCardProvider.CreateConnectionsCard(2, 1, 1, 3, 2);
+
+            Assert.That(card.Id, Is.EqualTo("api.connections"));
+            Assert.That(card.Status, Is.EqualTo(DeucarianControlCenterStatus.Error));
+            Assert.That(card.StatusText, Is.EqualTo("1 invalid binding(s)"));
+            Assert.That(string.Join(" ", card.Details), Does.Not.Contain("http"));
+        }
+
+        [Test]
+        public void ApiConnectionsWindowUsesSharedWorkbenchChrome()
+        {
+            UnityEditor.PackageManager.PackageInfo package =
+                UnityEditor.PackageManager.PackageInfo.FindForAssembly(
+                    typeof(ApiConnectionsWindow).Assembly);
+            Assert.That(package, Is.Not.Null);
+            string source = File.ReadAllText(
+                Path.Combine(
+                    package.resolvedPath,
+                    "Editor",
+                    "ApiConnectionsWindow.cs"));
+
+            Assert.That(
+                source,
+                Does.Contain("DeucarianEditorWorkbenchGUI.BeginSettingsPage"));
+            Assert.That(
+                source,
+                Does.Contain("DeucarianEditorChrome.DrawPackageHeader"));
+            Assert.That(
+                source,
+                Does.Contain("DeucarianEditorChrome.DrawFooterVersion"));
+        }
 
         [SetUp]
         public void SetUp()
@@ -297,7 +335,7 @@ namespace Deucarian.API.Tests
             var serialized = new SerializedObject(project);
             SerializedProperty bindings =
                 serialized.FindProperty("bindings");
-            bindings.InsertArrayElementAtIndex(0);
+            bindings.InsertArrayElementAtIndex(bindings.arraySize - 1);
             serialized.ApplyModifiedPropertiesWithoutUndo();
 
             Assert.IsFalse(
