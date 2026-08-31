@@ -1,5 +1,11 @@
 # Changelog
 
+## 2.0.1 - 2026-08-31
+
+- Registered API Connections and sanitized service/environment readiness with Deucarian Control Center.
+- Moved raw JSON logging from the global menu into a confirmation-marked Developer action.
+- Removed the package-owned global API menu and updated the shared editor dependency to 1.2.0.
+
 ## 2.0.0 - 2026-08-26
 
 - Updated the exact Logging dependency to 1.0.3 for the coordinated editor UX
