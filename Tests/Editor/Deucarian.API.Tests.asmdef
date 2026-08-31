@@ -4,6 +4,7 @@
   "references": [
     "Deucarian.API",
     "Deucarian.API.Editor",
+    "Deucarian.Editor",
     "Newtonsoft.Json"
   ],
   "includePlatforms": [

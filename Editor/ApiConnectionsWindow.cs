@@ -1,6 +1,7 @@
 using System;
 using Deucarian.API.Configuration;
 using Deucarian.API.Models;
+using Deucarian.Editor;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,7 +15,6 @@ namespace Deucarian.API.Editor
         private Vector2 scroll;
         private string message;
 
-        [MenuItem("Tools/Deucarian/API Connections")]
         public static void Open()
         {
             var window = GetWindow<ApiConnectionsWindow>("API Connections");
@@ -24,25 +24,34 @@ namespace Deucarian.API.Editor
 
         private void OnGUI()
         {
-            scroll = EditorGUILayout.BeginScrollView(scroll);
-            EditorGUILayout.LabelField("API Connections", EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox(
-                "Each service must bind exactly one project-owned settings " +
-                "asset by GUID. Packages provide definitions, never hosts.",
-                MessageType.Info);
-
-            DrawCreateAndBind();
-            GUILayout.Space(8f);
-            DrawBindings();
-            GUILayout.Space(8f);
-            DrawSelectedSettings();
-
-            if (!string.IsNullOrWhiteSpace(message))
+            using (DeucarianEditorWorkbenchPanelScope page =
+                   DeucarianEditorWorkbenchGUI.BeginSettingsPage(
+                       GUILayout.ExpandHeight(true)))
             {
-                EditorGUILayout.HelpBox(message, MessageType.Info);
-            }
+                scroll = EditorGUILayout.BeginScrollView(scroll);
+                DeucarianEditorChrome.DrawPackageHeader(
+                    "network",
+                    "API Connections",
+                    "Bind project-owned environment hosts to package service definitions.");
+                EditorGUILayout.HelpBox(
+                    "Each service must bind exactly one project-owned settings " +
+                    "asset by GUID. Packages provide definitions, never hosts.",
+                    MessageType.Info);
 
-            EditorGUILayout.EndScrollView();
+                DrawCreateAndBind();
+                GUILayout.Space(8f);
+                DrawBindings();
+                GUILayout.Space(8f);
+                DrawSelectedSettings();
+
+                if (!string.IsNullOrWhiteSpace(message))
+                {
+                    EditorGUILayout.HelpBox(message, MessageType.Info);
+                }
+
+                DeucarianEditorChrome.DrawFooterVersion("com.deucarian.api");
+                EditorGUILayout.EndScrollView();
+            }
         }
 
         private void DrawCreateAndBind()

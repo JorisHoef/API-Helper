@@ -239,6 +239,8 @@ to DTO-like calls whose request or endpoint still uses `Auto`, so prefer
 per-request or per-endpoint `ResponseFormat` overrides for files, text endpoints,
 and images.
 
+Control Center reports only service-binding and configured/unconfigured environment counts. It never exposes host URLs, headers, credentials, or response payloads. Advanced raw-JSON logging is available only as a confirmation-marked Developer action.
+
 ## Environment And Endpoint Composition
 
 `ApiServiceDefinition` owns the credential-free contract: service identity,
@@ -248,7 +250,7 @@ policy overrides. It stores no credential or active environment.
 
 Create settings through an installed integration's explicit setup action, for
 example `Assets > Create > Deucarian > Connections > Simultria Connection
-Settings`, or through `Tools > Deucarian > Project Setup`. The integration
+Settings`, or through the **API Connections** card in `Tools > Deucarian > Control Center...`. The integration
 supplies its service definition and the factory creates every required managed
 environment/client slot with blank hosts. Missing hosts remain visible as
 **Missing** and fail closed.
@@ -704,7 +706,7 @@ decoders that cannot be handled cleanly with `string` or `byte[]`.
 
 ## Versioning
 
-Current package version: `2.0.0`.
+Current package version: `2.0.1`.
 
 Branch strategy:
 
