@@ -6,7 +6,7 @@ namespace Deucarian.API.Models
     /// <summary>Vendor-neutral lifecycle stage for an API deployment.</summary>
     public enum ApiEnvironmentStage
     {
-        /// <summary>No standard deployment stage has been assigned.</summary>
+        /// <summary>No built-in deployment stage has been assigned.</summary>
         Custom = 0,
 
         /// <summary>Developer-facing integration environment.</summary>
@@ -19,10 +19,13 @@ namespace Deucarian.API.Models
         Acceptance = 3,
 
         /// <summary>Live production environment.</summary>
-        Production = 4
+        Production = 4,
+
+        /// <summary>Package-defined local developer environment.</summary>
+        Local = 5
     }
 
-    /// <summary>Shared ordering for the four conventional deployment stages.</summary>
+    /// <summary>Shared ordering and validation for built-in deployment stages.</summary>
     public static class ApiEnvironmentStages
     {
         private static readonly IReadOnlyList<ApiEnvironmentStage> standard =
@@ -34,8 +37,42 @@ namespace Deucarian.API.Models
                 ApiEnvironmentStage.Production
             });
 
-        /// <summary>Development, Testing, Acceptance, and Production in order.</summary>
+        private static readonly IReadOnlyList<ApiEnvironmentStage> all =
+            Array.AsReadOnly(new[]
+            {
+                ApiEnvironmentStage.Local,
+                ApiEnvironmentStage.Development,
+                ApiEnvironmentStage.Testing,
+                ApiEnvironmentStage.Acceptance,
+                ApiEnvironmentStage.Production
+            });
+
+        /// <summary>The four conventional remote deployment stages in order.</summary>
         public static IReadOnlyList<ApiEnvironmentStage> Standard => standard;
+
+        /// <summary>
+        /// All first-class stages in user-facing order: Local followed by the
+        /// four conventional remote deployment stages. Custom is intentionally
+        /// excluded because it represents an unknown or integration-defined stage.
+        /// </summary>
+        public static IReadOnlyList<ApiEnvironmentStage> All => all;
+
+        /// <summary>Returns whether a serialized value is a supported stage.</summary>
+        public static bool IsSupported(ApiEnvironmentStage stage)
+        {
+            switch (stage)
+            {
+                case ApiEnvironmentStage.Custom:
+                case ApiEnvironmentStage.Development:
+                case ApiEnvironmentStage.Testing:
+                case ApiEnvironmentStage.Acceptance:
+                case ApiEnvironmentStage.Production:
+                case ApiEnvironmentStage.Local:
+                    return true;
+                default:
+                    return false;
+            }
+        }
     }
 
     /// <summary>
@@ -56,8 +93,7 @@ namespace Deucarian.API.Models
                     nameof(environmentId));
             }
 
-            if ((int)stage < (int)ApiEnvironmentStage.Custom ||
-                (int)stage > (int)ApiEnvironmentStage.Production)
+            if (!ApiEnvironmentStages.IsSupported(stage))
             {
                 throw new ArgumentOutOfRangeException(
                     nameof(stage),

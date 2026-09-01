@@ -92,7 +92,18 @@ namespace Deucarian.API.Tests
 
             Assert.IsTrue(created, error);
             Assert.AreSame(definition, settings.ServiceDefinition);
-            Assert.AreEqual(4, settings.Environments.Count);
+            Assert.AreEqual(5, settings.Environments.Count);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "local",
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
             foreach (ApiEnvironmentProfile environment in settings.Environments)
             {
                 Assert.AreEqual(1, environment.Clients.Count);
@@ -109,10 +120,279 @@ namespace Deucarian.API.Tests
 
             UnityEngine.Object[] assets =
                 AssetDatabase.LoadAllAssetsAtPath(SettingsPath);
+            Assert.AreEqual(6, assets.Length);
+            Assert.AreEqual(
+                5,
+                assets.OfType<ApiEnvironmentProfile>().Count());
+        }
+
+        [Test]
+        public void PackageUpgrade_KeepsMissingEnvironmentKnownAndCanAddItsBlankSlot()
+        {
+            ApiServiceDefinition definition = CreateServiceDefinitionAsset();
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TryCreateProjectSettings(
+                    SettingsPath,
+                    definition,
+                    out ApiConnectionSettings settings,
+                    out string error),
+                error);
+            ApiEnvironmentProfile development = settings.Environments.Single(
+                environment => environment.EnvironmentId == "development");
+            development.Clients[0].BaseUrl =
+                "https://development.example.invalid";
+            EditorUtility.SetDirty(development);
+            RemoveEnvironmentSlot(settings, "local");
+
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            Assert.That(settings.Environments, Has.Count.EqualTo(4));
+            Assert.IsTrue(
+                settings.TryCreateComposition(
+                    out ApiComposition composition,
+                    out error),
+                error);
+            ApiEnvironmentStatus localStatus =
+                composition.GetEnvironmentStatus("local");
+            Assert.AreEqual(
+                ApiEnvironmentAvailability.Unconfigured,
+                localStatus.Availability);
+            Assert.AreEqual(ApiEnvironmentStage.Local, localStatus.Stage);
+            Assert.AreNotEqual(ApiEnvironmentStage.Custom, localStatus.Stage);
+            Assert.IsFalse(
+                composition.TryResolveClient(
+                    new ApiEnvironmentId("local"),
+                    PrimaryClientId,
+                    out _,
+                    out string resolutionError));
+            StringAssert.Contains("known but not configured", resolutionError);
+            Assert.IsTrue(
+                ApiControlCenterCardProvider.TryCountEnvironmentAvailability(
+                    settings,
+                    out int configuredCount,
+                    out int unconfiguredCount,
+                    out error),
+                error);
+            Assert.AreEqual(1, configuredCount);
+            Assert.AreEqual(4, unconfiguredCount);
+
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TrySynchronizeProjectSettings(
+                    settings,
+                    out int addedCount,
+                    out error),
+                error);
+            Assert.AreEqual(1, addedCount);
+            Assert.That(settings.Environments, Has.Count.EqualTo(5));
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "local",
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            ApiEnvironmentProfile addedLocal = settings.Environments.Single(
+                environment => environment.EnvironmentId == "local");
+            Assert.That(addedLocal.Clients, Has.Count.EqualTo(1));
+            Assert.That(addedLocal.Clients[0].BaseUrl, Is.Empty);
+            Assert.That(
+                settings.Environments.Single(
+                    environment => environment.EnvironmentId == "development")
+                    .Clients[0].BaseUrl,
+                Is.EqualTo("https://development.example.invalid"));
+
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "local",
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            Assert.That(
+                settings.Environments.Single(
+                    environment => environment.EnvironmentId == "development")
+                    .Clients[0].BaseUrl,
+                Is.EqualTo("https://development.example.invalid"));
+            UnityEngine.Object[] synchronizedAssets =
+                AssetDatabase.LoadAllAssetsAtPath(SettingsPath);
+            Assert.AreEqual(6, synchronizedAssets.Length);
+            Assert.AreEqual(
+                5,
+                synchronizedAssets.OfType<ApiEnvironmentProfile>().Count());
+        }
+
+        [Test]
+        public void PackageUpgrade_FailedSynchronizationRollsBackAndDestroysAddition()
+        {
+            ApiServiceDefinition definition = CreateServiceDefinitionAsset();
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TryCreateProjectSettings(
+                    SettingsPath,
+                    definition,
+                    out ApiConnectionSettings settings,
+                    out string error),
+                error);
+            RemoveEnvironmentSlot(settings, "local");
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            ApiEnvironmentProfile attemptedAddition = null;
+
+            Assert.IsFalse(
+                ApiConnectionSettingsAssetFactory.TrySynchronizeProjectSettings(
+                    settings,
+                    (environment, owner) =>
+                    {
+                        attemptedAddition = environment;
+                        AssetDatabase.AddObjectToAsset(environment, owner);
+                        throw new InvalidOperationException(
+                            "Injected synchronization failure.");
+                    },
+                    out int addedCount,
+                    out error));
+
+            Assert.AreEqual(0, addedCount);
+            StringAssert.Contains("InvalidOperationException", error);
+            Assert.IsTrue(
+                attemptedAddition == null,
+                "The failed migration left a transient environment alive.");
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            Assert.IsTrue(settings.TryValidate(out error), error);
+            UnityEngine.Object[] assets =
+                AssetDatabase.LoadAllAssetsAtPath(SettingsPath);
             Assert.AreEqual(5, assets.Length);
             Assert.AreEqual(
                 4,
                 assets.OfType<ApiEnvironmentProfile>().Count());
+        }
+
+        [Test]
+        public void PackageUpgrade_ReordersExistingSlotsWithoutReplacingThem()
+        {
+            ApiServiceDefinition definition = CreateServiceDefinitionAsset();
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TryCreateProjectSettings(
+                    SettingsPath,
+                    definition,
+                    out ApiConnectionSettings settings,
+                    out string error),
+                error);
+            var serialized = new SerializedObject(settings);
+            SerializedProperty environments =
+                serialized.FindProperty("environments");
+            environments.MoveArrayElement(0, environments.arraySize - 1);
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(
+                SettingsPath,
+                ImportAssetOptions.ForceUpdate);
+
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production",
+                    "local"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TrySynchronizeProjectSettings(
+                    settings,
+                    out int addedCount,
+                    out error),
+                error);
+            Assert.AreEqual(0, addedCount);
+
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "local",
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            Assert.AreEqual(
+                5,
+                AssetDatabase.LoadAllAssetsAtPath(SettingsPath)
+                    .OfType<ApiEnvironmentProfile>()
+                    .Count());
+        }
+
+        [Test]
+        public void PackageUpgrade_UndoRestoresLegacyEnvironmentList()
+        {
+            ApiServiceDefinition definition = CreateServiceDefinitionAsset();
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TryCreateProjectSettings(
+                    SettingsPath,
+                    definition,
+                    out ApiConnectionSettings settings,
+                    out string error),
+                error);
+            RemoveEnvironmentSlot(settings, "local");
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            Assert.IsTrue(
+                ApiConnectionSettingsAssetFactory.TrySynchronizeProjectSettings(
+                    settings,
+                    out int addedCount,
+                    out error),
+                error);
+            Assert.AreEqual(1, addedCount);
+
+            Undo.PerformUndo();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(
+                SettingsPath,
+                ImportAssetOptions.ForceUpdate);
+
+            settings = AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                SettingsPath);
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    "development",
+                    "testing",
+                    "acceptance",
+                    "production"
+                },
+                settings.Environments.Select(environment =>
+                    environment.EnvironmentId));
+            Assert.AreEqual(
+                4,
+                AssetDatabase.LoadAllAssetsAtPath(SettingsPath)
+                    .OfType<ApiEnvironmentProfile>()
+                    .Count());
         }
 
         [Test]
@@ -126,7 +406,9 @@ namespace Deucarian.API.Tests
                     out ApiConnectionSettings settings,
                     out string error),
                 error);
-            ApiEnvironmentProfile development = settings.Environments[0];
+            ApiEnvironmentProfile development = settings.Environments.Single(
+                environment =>
+                    environment.EnvironmentId == "development");
             development.Clients[0].BaseUrl =
                 "https://development.example.com/root";
             development.DefaultRequestPolicy.TimeoutSeconds = 41;
@@ -192,7 +474,7 @@ namespace Deucarian.API.Tests
                     out message),
                 message);
             CollectionAssert.AreEqual(
-                ApiEnvironmentStages.Standard,
+                ApiEnvironmentStages.All,
                 environments.Select(environment => environment.Stage));
 
             definition.RequiredClients.Clear();
@@ -346,6 +628,39 @@ namespace Deucarian.API.Tests
             StringAssert.StartsWith("DEU-API-002", error);
         }
 
+        private static void RemoveEnvironmentSlot(
+            ApiConnectionSettings settings,
+            string environmentId)
+        {
+            ApiEnvironmentProfile environment = settings.Environments.Single(
+                candidate => candidate.EnvironmentId == environmentId);
+            var serialized = new SerializedObject(settings);
+            SerializedProperty environments =
+                serialized.FindProperty("environments");
+            for (int index = environments.arraySize - 1; index >= 0; index--)
+            {
+                if (environments.GetArrayElementAtIndex(index)
+                        .objectReferenceValue != environment)
+                {
+                    continue;
+                }
+
+                int previousSize = environments.arraySize;
+                environments.DeleteArrayElementAtIndex(index);
+                if (environments.arraySize == previousSize)
+                {
+                    environments.DeleteArrayElementAtIndex(index);
+                }
+            }
+
+            serialized.ApplyModifiedPropertiesWithoutUndo();
+            UnityEngine.Object.DestroyImmediate(environment, true);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset(
+                SettingsPath,
+                ImportAssetOptions.ForceUpdate);
+        }
+
         private static void AssertNoCreateAssetMenu<T>()
         {
             Assert.IsNull(
@@ -372,7 +687,7 @@ namespace Deucarian.API.Tests
                     "example.api",
                     "Example API",
                     catalog,
-                    ApiEnvironmentStages.Standard.Select(
+                    ApiEnvironmentStages.All.Select(
                         stage => new ApiEnvironmentDescriptor(
                             new ApiEnvironmentId(
                                 stage.ToString().ToLowerInvariant()),

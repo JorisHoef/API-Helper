@@ -186,8 +186,15 @@ namespace Deucarian.API.Tests
         }
 
         [Test]
-        public void EnvironmentStages_ExposeConventionalOrder()
+        public void EnvironmentStages_PreserveSerializedValuesAndExposeBuiltInOrder()
         {
+            Assert.AreEqual(0, (int)ApiEnvironmentStage.Custom);
+            Assert.AreEqual(1, (int)ApiEnvironmentStage.Development);
+            Assert.AreEqual(2, (int)ApiEnvironmentStage.Testing);
+            Assert.AreEqual(3, (int)ApiEnvironmentStage.Acceptance);
+            Assert.AreEqual(4, (int)ApiEnvironmentStage.Production);
+            Assert.AreEqual(5, (int)ApiEnvironmentStage.Local);
+
             CollectionAssert.AreEqual(
                 new[]
                 {
@@ -197,6 +204,84 @@ namespace Deucarian.API.Tests
                     ApiEnvironmentStage.Production
                 },
                 ApiEnvironmentStages.Standard);
+
+            CollectionAssert.AreEqual(
+                new[]
+                {
+                    ApiEnvironmentStage.Local,
+                    ApiEnvironmentStage.Development,
+                    ApiEnvironmentStage.Testing,
+                    ApiEnvironmentStage.Acceptance,
+                    ApiEnvironmentStage.Production
+                },
+                ApiEnvironmentStages.All);
+
+            Assert.IsTrue(ApiEnvironmentStages.IsSupported(
+                ApiEnvironmentStage.Local));
+            Assert.IsTrue(ApiEnvironmentStages.IsSupported(
+                ApiEnvironmentStage.Custom));
+            Assert.IsFalse(ApiEnvironmentStages.IsSupported(
+                (ApiEnvironmentStage)6));
+        }
+
+        [Test]
+        public void EnvironmentDescriptor_AcceptsLocalAndRejectsUnknownStageValues()
+        {
+            ApiEnvironmentDescriptor local = Describe(
+                "simultria.local",
+                ApiEnvironmentStage.Local,
+                " Local ");
+
+            Assert.AreEqual(ApiEnvironmentStage.Local, local.Stage);
+            Assert.AreEqual("Local", local.DisplayName);
+            Assert.Throws<ArgumentOutOfRangeException>(
+                () => Describe(
+                    "unsupported",
+                    (ApiEnvironmentStage)6,
+                    "Unsupported"));
+        }
+
+        [Test]
+        public void Composition_PreservesKnownBlankLocalAsUnconfiguredNotCustom()
+        {
+            ApiEnvironmentProfile local = CreateEnvironment(
+                "simultria.local",
+                "Local profile",
+                string.Empty);
+            ApiEndpointCatalog catalog = CreateCatalog();
+            catalog.Endpoints.Add(CreateEndpoint(
+                "health.get",
+                "primary",
+                "health",
+                HttpMethod.GET));
+            ApiComposition composition = new ApiComposition(
+                new[] { local },
+                catalog,
+                new[]
+                {
+                    Describe(
+                        "simultria.local",
+                        ApiEnvironmentStage.Local,
+                        "Local")
+                });
+
+            ApiEnvironmentStatus status =
+                composition.GetEnvironmentStatus("simultria.local");
+
+            Assert.AreEqual(
+                ApiEnvironmentAvailability.Unconfigured,
+                status.Availability);
+            Assert.AreEqual(ApiEnvironmentStage.Local, status.Stage);
+            Assert.AreEqual("Local", status.DisplayName);
+            Assert.AreNotEqual(ApiEnvironmentStage.Custom, status.Stage);
+
+            Assert.IsFalse(composition.TryResolveClient(
+                new ApiEnvironmentId("simultria.local"),
+                new ApiClientId("primary"),
+                out ApiResolvedClient client,
+                out string message));
+            Assert.IsNull(client);
+            StringAssert.Contains("known but not configured", message);
         }
 
         [Test]
