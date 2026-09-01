@@ -1,5 +1,18 @@
 # Changelog
 
+## 2.0.2 - 2026-09-01
+
+- Added `Local` as a first-class API environment stage without changing the
+  serialized values of `Custom`, `Development`, `Testing`, `Acceptance`, or
+  `Production`.
+- Added the package-owned `ApiEnvironmentStages.All` order with Local first,
+  while preserving the four-stage `Standard` compatibility order.
+- Kept blank Local connection slots unconfigured and fail-closed instead of
+  treating Local as Custom or falling back to another deployment stage.
+- Made package-definition environment additions backward compatible with older
+  settings assets and added a safe editor synchronization action that preserves
+  existing hosts while creating only the missing blank slots.
+
 ## 2.0.1 - 2026-08-31
 
 - Registered API Connections and sanitized service/environment readiness with Deucarian Control Center.
