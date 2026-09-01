@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Deucarian.API.Configuration;
+using Deucarian.API.Core;
 using Deucarian.API.Models;
 using Deucarian.Editor;
 using UnityEditor;
@@ -63,20 +64,19 @@ namespace Deucarian.API.Editor
                     continue;
                 }
 
-                resolvedCount++;
-                foreach (ApiEnvironmentProfile environment in settings.Environments)
+                if (!TryCountEnvironmentAvailability(
+                        settings,
+                        out int configured,
+                        out int unconfigured,
+                        out _))
                 {
-                    if (environment != null &&
-                        environment.ClassifyConfiguration(out _) ==
-                        ApiEnvironmentProfileConfigurationState.Configured)
-                    {
-                        configuredEnvironmentCount++;
-                    }
-                    else
-                    {
-                        unconfiguredEnvironmentCount++;
-                    }
+                    invalidCount++;
+                    continue;
                 }
+
+                resolvedCount++;
+                configuredEnvironmentCount += configured;
+                unconfiguredEnvironmentCount += unconfigured;
             }
 
             yield return CreateConnectionsCard(
@@ -132,6 +132,49 @@ namespace Deucarian.API.Editor
                         "Configure project-owned environment hosts.")
                 },
                 new[] { "api", "connections", "services", "environments", "hosts" });
+        }
+
+        internal static bool TryCountEnvironmentAvailability(
+            ApiConnectionSettings settings,
+            out int configuredCount,
+            out int unconfiguredCount,
+            out string error)
+        {
+            configuredCount = 0;
+            unconfiguredCount = 0;
+            if (settings == null)
+            {
+                error = "API connection settings are required.";
+                return false;
+            }
+
+            if (!settings.TryCreateComposition(
+                    out ApiComposition composition,
+                    out error) ||
+                !settings.ServiceDefinition.TryGetEnvironmentDescriptors(
+                    out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
+                    out error))
+            {
+                return false;
+            }
+
+            foreach (ApiEnvironmentDescriptor descriptor in descriptors)
+            {
+                ApiEnvironmentStatus status = composition.GetEnvironmentStatus(
+                    descriptor.EnvironmentId);
+                if (status.Availability ==
+                    ApiEnvironmentAvailability.Configured)
+                {
+                    configuredCount++;
+                }
+                else
+                {
+                    unconfiguredCount++;
+                }
+            }
+
+            error = null;
+            return true;
         }
 
         internal static DeucarianControlCenterCard CreateDeveloperCard(bool rawJsonEnabled)

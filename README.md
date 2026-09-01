@@ -29,6 +29,8 @@ Do not use this package to own session lifecycle, object-loading source resoluti
 - Central `ApiClientConfig` ScriptableObject for base URL, headers, timeout,
   authentication, JSON settings, certificate handling, and logging.
 - Stable serializable environment, client, catalog, and endpoint identifiers.
+- A first-class Local environment stage, distinct from Custom and ordered before
+  the four conventional remote deployment stages.
 - `ApiEnvironmentProfile` assets that map named clients to environment-specific base URLs.
 - `ApiEndpointCatalog` assets that keep stable route IDs and HTTP metadata independent of hosts.
 - `ApiComposition` for explicit environment resolution without active global state.
@@ -270,6 +272,18 @@ Integration packages can declare a standard ordered environment set with
 `Unconfigured` and cannot resolve traffic. A partially filled or malformed profile
 remains invalid. Existing constructors retain their strict configured-profile
 requirement.
+
+`ApiEnvironmentStage.Local` is a built-in package contract, not a Custom stage.
+Its serialized value is additive so the existing `Custom`, `Development`,
+`Testing`, `Acceptance`, and `Production` values remain unchanged.
+`ApiEnvironmentStages.All` exposes the user-facing order Local, Development,
+Testing, Acceptance, Production. `ApiEnvironmentStages.Standard` remains the
+four conventional remote stages for source compatibility. A Local profile may
+have blank hosts; it then remains visibly unconfigured and cannot silently route
+traffic through Development or any other environment. Existing settings assets
+created before a package adds an environment remain valid: the new package-owned
+environment appears as unconfigured, and **Add Missing Connection Slots** adds a
+blank project-owned slot without changing existing hosts.
 
 ```csharp
 ApiComposition composition = new ApiComposition(
@@ -706,7 +720,7 @@ decoders that cannot be handled cleanly with `string` or `byte[]`.
 
 ## Versioning
 
-Current package version: `2.0.1`.
+Current package version: `2.0.2`.
 
 Branch strategy:
 
