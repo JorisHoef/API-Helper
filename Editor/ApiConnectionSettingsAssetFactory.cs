@@ -106,6 +106,215 @@ namespace Deucarian.API.Editor
             }
         }
 
+        /// <summary>
+        /// Adds blank project-owned slots for environments introduced by a
+        /// newer package service definition. Existing configured slots are
+        /// preserved exactly.
+        /// </summary>
+        public static bool TrySynchronizeProjectSettings(
+            ApiConnectionSettings settings,
+            out int addedEnvironmentCount,
+            out string error)
+        {
+            return TrySynchronizeProjectSettings(
+                settings,
+                (environment, owner) =>
+                    AssetDatabase.AddObjectToAsset(environment, owner),
+                out addedEnvironmentCount,
+                out error);
+        }
+
+        internal static bool TrySynchronizeProjectSettings(
+            ApiConnectionSettings settings,
+            Action<ApiEnvironmentProfile, ApiConnectionSettings>
+                addObjectToAsset,
+            out int addedEnvironmentCount,
+            out string error)
+        {
+            addedEnvironmentCount = 0;
+            if (settings == null)
+            {
+                error = "API connection settings are required.";
+                return false;
+            }
+
+            if (addObjectToAsset == null)
+            {
+                error = "An asset synchronization action is required.";
+                return false;
+            }
+
+            string assetPath = AssetDatabase.GetAssetPath(settings);
+            if (string.IsNullOrWhiteSpace(assetPath) ||
+                !assetPath.StartsWith("Assets/", StringComparison.Ordinal) ||
+                AssetDatabase.LoadMainAssetAtPath(assetPath) != settings)
+            {
+                error =
+                    "Only a project-owned API connection settings asset can be synchronized.";
+                return false;
+            }
+
+            ApiServiceDefinition definition = settings.ServiceDefinition;
+            if (definition == null)
+            {
+                error = "Assign the package-owned API service definition.";
+                return false;
+            }
+
+            if (!definition.IsValid(out error) ||
+                !definition.TryGetEnvironmentDescriptors(
+                    out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
+                    out error) ||
+                !definition.TryGetRequiredClientIds(
+                    out IReadOnlyList<ApiClientId> clients,
+                    out error) ||
+                !settings.TryValidate(out error))
+            {
+                return false;
+            }
+
+            var existing = new Dictionary<
+                ApiEnvironmentId,
+                ApiEnvironmentProfile>();
+            foreach (ApiEnvironmentProfile environment in settings.Environments)
+            {
+                environment.TryGetId(out ApiEnvironmentId environmentId);
+                existing.Add(environmentId, environment);
+            }
+
+            bool requiresChange =
+                settings.Environments.Count != descriptors.Count;
+            for (int index = 0;
+                 !requiresChange && index < descriptors.Count;
+                 index++)
+            {
+                requiresChange = !ReferenceEquals(
+                    settings.Environments[index],
+                    existing[descriptors[index].EnvironmentId]);
+            }
+
+            if (!requiresChange)
+            {
+                error = null;
+                return true;
+            }
+
+            var original = new List<ApiEnvironmentProfile>(
+                settings.Environments);
+            var additions = new List<ApiEnvironmentProfile>();
+            var synchronized = new List<ApiEnvironmentProfile>(
+                descriptors.Count);
+            Undo.IncrementCurrentGroup();
+            int undoGroup = Undo.GetCurrentGroup();
+            Undo.SetCurrentGroupName("Synchronize API Connection Settings");
+            try
+            {
+                Undo.RegisterCompleteObjectUndo(
+                    settings,
+                    "Synchronize API Connection Settings");
+                foreach (ApiEnvironmentDescriptor descriptor in descriptors)
+                {
+                    if (existing.TryGetValue(
+                            descriptor.EnvironmentId,
+                            out ApiEnvironmentProfile environment))
+                    {
+                        synchronized.Add(environment);
+                        continue;
+                    }
+
+                    environment = CreateEnvironment(descriptor, clients);
+                    additions.Add(environment);
+                    Undo.RegisterCreatedObjectUndo(
+                        environment,
+                        "Synchronize API Connection Settings");
+                    addObjectToAsset(environment, settings);
+                    synchronized.Add(environment);
+                }
+
+                settings.SetManagedEnvironments(synchronized);
+                addedEnvironmentCount = additions.Count;
+                EditorUtility.SetDirty(settings);
+                AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(
+                    assetPath,
+                    ImportAssetOptions.ForceUpdate);
+                Undo.CollapseUndoOperations(undoGroup);
+                error = null;
+                return true;
+            }
+            catch (Exception exception)
+            {
+                TryRevertSynchronization(
+                    settings,
+                    assetPath,
+                    original,
+                    additions,
+                    undoGroup);
+                addedEnvironmentCount = 0;
+                error = "The API connection settings could not be synchronized (" +
+                    exception.GetType().Name + ").";
+                return false;
+            }
+        }
+
+        private static void TryRevertSynchronization(
+            ApiConnectionSettings settings,
+            string assetPath,
+            IReadOnlyList<ApiEnvironmentProfile> original,
+            IReadOnlyList<ApiEnvironmentProfile> additions,
+            int undoGroup)
+        {
+            try
+            {
+                Undo.RevertAllDownToGroup(undoGroup);
+            }
+            catch (Exception)
+            {
+            }
+
+            try
+            {
+                if (settings != null)
+                {
+                    settings.SetManagedEnvironments(original);
+                }
+            }
+            catch (Exception)
+            {
+            }
+
+            for (int index = 0; index < additions.Count; index++)
+            {
+                ApiEnvironmentProfile environment = additions[index];
+                if (environment != null)
+                {
+                    try
+                    {
+                        Undo.DestroyObjectImmediate(environment);
+                    }
+                    catch (Exception)
+                    {
+                    }
+                }
+            }
+
+            try
+            {
+                if (settings != null)
+                {
+                    EditorUtility.SetDirty(settings);
+                }
+
+                AssetDatabase.SaveAssets();
+                AssetDatabase.ImportAsset(
+                    assetPath,
+                    ImportAssetOptions.ForceUpdate);
+            }
+            catch (Exception)
+            {
+            }
+        }
+
         internal static ApiEnvironmentProfile CreateEnvironment(
             ApiEnvironmentDescriptor descriptor,
             IReadOnlyList<ApiClientId> requiredClients)

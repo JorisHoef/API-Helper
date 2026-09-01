@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Deucarian.API.Configuration;
 using Deucarian.API.Models;
 using Deucarian.Editor;
@@ -166,18 +167,47 @@ namespace Deucarian.API.Editor
                 "Blank environments remain visibly unconfigured and cannot " +
                 "resolve traffic. No environment is selected implicitly.",
                 MessageType.None);
-            foreach (ApiEnvironmentProfile environment in
-                selectedSettings.Environments)
+            ApiServiceDefinition definition =
+                selectedSettings.ServiceDefinition;
+            if (definition == null)
             {
+                EditorGUILayout.HelpBox(
+                    "Assign the package-owned API service definition.",
+                    MessageType.Error);
+                return;
+            }
+
+            if (!definition.TryGetEnvironmentDescriptors(
+                    out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
+                    out string descriptorError))
+            {
+                EditorGUILayout.HelpBox(
+                    descriptorError,
+                    MessageType.Error);
+                return;
+            }
+
+            int missingSlotCount = 0;
+            foreach (ApiEnvironmentDescriptor descriptor in descriptors)
+            {
+                ApiEnvironmentProfile environment = FindEnvironment(
+                    selectedSettings.Environments,
+                    descriptor.EnvironmentId);
                 if (environment == null)
                 {
+                    missingSlotCount++;
+                    EditorGUILayout.LabelField(
+                        descriptor.DisplayName,
+                        EditorStyles.boldLabel);
+                    EditorGUILayout.HelpBox(
+                        "This package environment is known but its project " +
+                        "connection slot has not been added yet.",
+                        MessageType.Warning);
                     continue;
                 }
 
                 EditorGUILayout.LabelField(
-                    string.IsNullOrWhiteSpace(environment.DisplayName)
-                        ? environment.EnvironmentId
-                        : environment.DisplayName,
+                    descriptor.DisplayName,
                     EditorStyles.boldLabel);
                 foreach (ApiNamedClientDefinition client in environment.Clients)
                 {
@@ -202,11 +232,25 @@ namespace Deucarian.API.Editor
                 }
             }
 
+            bool requiresSynchronization =
+                RequiresSynchronization(selectedSettings, descriptors);
+            if (requiresSynchronization &&
+                GUILayout.Button(
+                    missingSlotCount > 0
+                        ? "Add Missing Connection Slots"
+                        : "Synchronize Connection Slot Order"))
+            {
+                SynchronizeSelectedSettings();
+            }
+
             if (selectedSettings.TryValidate(out string validMessage))
             {
                 EditorGUILayout.HelpBox(
-                    "Connection shape is valid. Blank environments remain " +
-                    "unavailable until configured.",
+                    missingSlotCount > 0
+                        ? "Connection shape is compatible. Add the missing " +
+                          "package slots to configure every environment."
+                        : "Connection shape is valid. Blank environments remain " +
+                          "unavailable until configured.",
                     MessageType.Info);
             }
             else
@@ -219,6 +263,77 @@ namespace Deucarian.API.Editor
                 AssetDatabase.SaveAssets();
                 message = "Connection settings saved.";
             }
+        }
+
+        private void SynchronizeSelectedSettings()
+        {
+            string assetPath = AssetDatabase.GetAssetPath(selectedSettings);
+            if (!ApiConnectionSettingsAssetFactory.TrySynchronizeProjectSettings(
+                    selectedSettings,
+                    out int addedCount,
+                    out string error))
+            {
+                message = error;
+                return;
+            }
+
+            if (!string.IsNullOrWhiteSpace(assetPath))
+            {
+                selectedSettings =
+                    AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(
+                        assetPath);
+            }
+
+            message = addedCount == 0
+                ? "Connection slots synchronized with package order."
+                : addedCount == 1
+                    ? "Added one blank package environment slot."
+                    : "Added " + addedCount +
+                      " blank package environment slots.";
+            GUIUtility.ExitGUI();
+        }
+
+        private static bool RequiresSynchronization(
+            ApiConnectionSettings settings,
+            IReadOnlyList<ApiEnvironmentDescriptor> descriptors)
+        {
+            if (settings.Environments.Count != descriptors.Count)
+            {
+                return true;
+            }
+
+            for (int index = 0; index < descriptors.Count; index++)
+            {
+                ApiEnvironmentProfile expected = FindEnvironment(
+                    settings.Environments,
+                    descriptors[index].EnvironmentId);
+                if (!ReferenceEquals(settings.Environments[index], expected))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static ApiEnvironmentProfile FindEnvironment(
+            IReadOnlyList<ApiEnvironmentProfile> environments,
+            ApiEnvironmentId environmentId)
+        {
+            if (environments != null)
+            {
+                foreach (ApiEnvironmentProfile environment in environments)
+                {
+                    if (environment != null &&
+                        environment.TryGetId(out ApiEnvironmentId candidate) &&
+                        candidate == environmentId)
+                    {
+                        return environment;
+                    }
+                }
+            }
+
+            return null;
         }
 
         private void CreateSettings()

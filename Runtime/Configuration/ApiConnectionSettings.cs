@@ -74,7 +74,11 @@ namespace Deucarian.API.Configuration
             }
         }
 
-        /// <summary>Validates service compatibility and every managed slot.</summary>
+        /// <summary>
+        /// Validates service compatibility and every project-owned slot.
+        /// Package-declared environments without a project slot remain known
+        /// and unconfigured so service-definition upgrades are additive.
+        /// </summary>
         public bool TryValidate(out string message)
         {
             return TryValidateShape(out _, out message);
@@ -95,6 +99,18 @@ namespace Deucarian.API.Configuration
 
             settings.serviceDefinition = definition;
             return settings;
+        }
+
+        internal void SetManagedEnvironments(
+            IEnumerable<ApiEnvironmentProfile> managedEnvironments)
+        {
+            if (managedEnvironments == null)
+            {
+                throw new ArgumentNullException(nameof(managedEnvironments));
+            }
+
+            environments.Clear();
+            environments.AddRange(managedEnvironments);
         }
 
         private bool TryValidateShape(
@@ -173,16 +189,6 @@ namespace Deucarian.API.Configuration
                             requiredClient + "'.";
                         return false;
                     }
-                }
-            }
-
-            foreach (ApiEnvironmentId expected in expectedEnvironments)
-            {
-                if (!suppliedEnvironments.Contains(expected))
-                {
-                    message = "API connection settings are missing environment '" +
-                        expected + "'.";
-                    return false;
                 }
             }
 

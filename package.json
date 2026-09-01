@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.api",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "displayName": "Deucarian API",
   "description": "A reusable Unity API foundation with package-owned service definitions, project-owned connection settings, typed identifiers, validation, and HTTP transport.",
   "license": "MIT",

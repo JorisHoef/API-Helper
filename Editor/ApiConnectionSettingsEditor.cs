@@ -173,11 +173,39 @@ namespace Deucarian.API.Editor
                 if (environment == null)
                 {
                     DrawState(
-                        "Missing",
-                        "Open Deucarian Control Center to repair environment '" +
-                        descriptor.EnvironmentId + "'.",
-                        DeucarianEditorStatus.Error,
-                        MessageType.Error);
+                        "Not configured",
+                        "The package now provides environment '" +
+                        descriptor.EnvironmentId +
+                        "', but this older project asset has no connection slot yet.",
+                        DeucarianEditorStatus.Warning,
+                        MessageType.Warning);
+                    if (projectOwned && GUILayout.Button(
+                            "Add Missing Connection Slots"))
+                    {
+                        if (!ApiConnectionSettingsAssetFactory
+                                .TrySynchronizeProjectSettings(
+                                    settings,
+                                    out int addedCount,
+                                    out string error))
+                        {
+                            EditorUtility.DisplayDialog(
+                                "Synchronize API Connection Settings",
+                                error,
+                                "OK");
+                        }
+                        else
+                        {
+                            EditorUtility.DisplayDialog(
+                                "Synchronize API Connection Settings",
+                                addedCount == 0
+                                    ? "The connection settings are already synchronized."
+                                    : addedCount == 1
+                                    ? "Added one blank package environment slot."
+                                    : "Added " + addedCount +
+                                      " blank package environment slots.",
+                                "OK");
+                        }
+                    }
                     return;
                 }
 
