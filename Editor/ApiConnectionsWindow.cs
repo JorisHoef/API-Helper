@@ -18,10 +18,13 @@ namespace Deucarian.API.Editor
 
         public static void Open()
         {
-            var window = GetWindow<ApiConnectionsWindow>("API Connections");
+            var window = DeucarianEditorWindowPages.GetStandalone<ApiConnectionsWindow>("API Connections");
             window.minSize = new Vector2(460f, 420f);
             window.Show();
         }
+
+        public static IDeucarianEditorPage CreatePage() =>
+            DeucarianEditorImGuiPage.Create<ApiConnectionsWindow>(DeucarianToolIds.ApiConnections, window => window.OnGUI());
 
         private void OnGUI()
         {

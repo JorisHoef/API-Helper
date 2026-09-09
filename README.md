@@ -720,7 +720,7 @@ decoders that cannot be handled cleanly with `string` or `byte[]`.
 
 ## Versioning
 
-Current package version: `2.0.2`.
+Current package version: `2.0.3`.
 
 Branch strategy:
 
