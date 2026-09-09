@@ -29,18 +29,17 @@ namespace Deucarian.API.Editor
         private void OnGUI()
         {
             using (DeucarianEditorWorkbenchPanelScope page =
-                   DeucarianEditorWorkbenchGUI.BeginSettingsPage(
+                   DeucarianEditorWorkbenchGUI.BeginSettingsPage(this,
                        GUILayout.ExpandHeight(true)))
             {
                 scroll = EditorGUILayout.BeginScrollView(scroll);
-                DeucarianEditorChrome.DrawPackageHeader(
+                DeucarianEditorChrome.DrawPackageHeader(this,
                     "network",
                     "API Connections",
                     "Bind project-owned environment hosts to package service definitions.");
-                EditorGUILayout.HelpBox(
-                    "Each service must bind exactly one project-owned settings " +
-                    "asset by GUID. Packages provide definitions, never hosts.",
-                    MessageType.Info);
+                DeucarianEditorTextGUI.LabelField(
+                    "Select a service and its connection settings, then bind them.",
+                    DeucarianEditorWorkbenchGUI.WordWrappedMiniLabelStyle);
 
                 DrawCreateAndBind();
                 GUILayout.Space(8f);
@@ -50,24 +49,24 @@ namespace Deucarian.API.Editor
 
                 if (!string.IsNullOrWhiteSpace(message))
                 {
-                    EditorGUILayout.HelpBox(message, MessageType.Info);
+                    DeucarianEditorTextGUI.HelpBox(message, MessageType.Info);
                 }
 
-                DeucarianEditorChrome.DrawFooterVersion("com.deucarian.api");
+                DeucarianEditorChrome.DrawFooterVersion(this, "com.deucarian.api");
                 EditorGUILayout.EndScrollView();
             }
         }
 
         private void DrawCreateAndBind()
         {
-            EditorGUILayout.LabelField("Explicit setup", EditorStyles.boldLabel);
-            serviceDefinition = (ApiServiceDefinition)EditorGUILayout.ObjectField(
+            DeucarianEditorTextGUI.LabelField("Connect a service", DeucarianEditorWorkbenchGUI.SectionTitleStyle);
+            serviceDefinition = (ApiServiceDefinition)DeucarianEditorInputGUI.ObjectField(
                 "Service definition",
                 serviceDefinition,
                 typeof(ApiServiceDefinition),
                 false);
             selectedSettings =
-                (ApiConnectionSettings)EditorGUILayout.ObjectField(
+                (ApiConnectionSettings)DeucarianEditorInputGUI.ObjectField(
                     "Connection settings",
                     selectedSettings,
                     typeof(ApiConnectionSettings),
@@ -75,14 +74,14 @@ namespace Deucarian.API.Editor
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                if (GUILayout.Button("Create settings"))
+                if (DeucarianEditorActionGUI.Button("Create settings"))
                 {
                     CreateSettings();
                 }
 
                 using (new EditorGUI.DisabledScope(selectedSettings == null))
                 {
-                    if (GUILayout.Button("Bind selected"))
+                    if (DeucarianEditorActionGUI.Button("Bind selected"))
                     {
                         BindSelected();
                     }
@@ -92,11 +91,11 @@ namespace Deucarian.API.Editor
 
         private void DrawBindings()
         {
-            EditorGUILayout.LabelField("Project bindings", EditorStyles.boldLabel);
+            DeucarianEditorTextGUI.LabelField("Project bindings", DeucarianEditorWorkbenchGUI.BoldLabelStyle);
             var project = ApiConnectionProjectSettings.instance;
             if (project.Bindings.Count == 0)
             {
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     "DEU-API-001 No API connection is bound.",
                     MessageType.Error);
                 return;
@@ -116,19 +115,19 @@ namespace Deucarian.API.Editor
                     AssetDatabase.LoadAssetAtPath<ApiConnectionSettings>(path);
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         binding.ServiceId,
                         GUILayout.Width(180f));
-                    EditorGUILayout.ObjectField(
+                    DeucarianEditorInputGUI.ObjectField(
                         settings,
                         typeof(ApiConnectionSettings),
                         false);
-                    if (GUILayout.Button("Select", GUILayout.Width(58f)))
+                    if (DeucarianEditorActionGUI.Button("Select", GUILayout.Width(58f)))
                     {
                         selectedSettings = settings;
                         Selection.activeObject = settings;
                     }
-                    if (GUILayout.Button("Clear", GUILayout.Width(52f)) &&
+                    if (DeucarianEditorActionGUI.Button("Clear", GUILayout.Width(52f)) &&
                         ApiServiceId.TryParse(
                             binding.ServiceId,
                             out ApiServiceId serviceId))
@@ -151,7 +150,7 @@ namespace Deucarian.API.Editor
 
                 if (!string.IsNullOrWhiteSpace(error))
                 {
-                    EditorGUILayout.HelpBox(error, MessageType.Error);
+                    DeucarianEditorTextGUI.HelpBox(error, MessageType.Error);
                 }
             }
         }
@@ -163,10 +162,10 @@ namespace Deucarian.API.Editor
                 return;
             }
 
-            EditorGUILayout.LabelField(
+            DeucarianEditorTextGUI.LabelField(
                 "Environment hosts",
-                EditorStyles.boldLabel);
-            EditorGUILayout.HelpBox(
+                DeucarianEditorWorkbenchGUI.BoldLabelStyle);
+            DeucarianEditorTextGUI.HelpBox(
                 "Blank environments remain visibly unconfigured and cannot " +
                 "resolve traffic. No environment is selected implicitly.",
                 MessageType.None);
@@ -174,7 +173,7 @@ namespace Deucarian.API.Editor
                 selectedSettings.ServiceDefinition;
             if (definition == null)
             {
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     "Assign the package-owned API service definition.",
                     MessageType.Error);
                 return;
@@ -184,7 +183,7 @@ namespace Deucarian.API.Editor
                     out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
                     out string descriptorError))
             {
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     descriptorError,
                     MessageType.Error);
                 return;
@@ -199,19 +198,19 @@ namespace Deucarian.API.Editor
                 if (environment == null)
                 {
                     missingSlotCount++;
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         descriptor.DisplayName,
-                        EditorStyles.boldLabel);
-                    EditorGUILayout.HelpBox(
+                        DeucarianEditorWorkbenchGUI.BoldLabelStyle);
+                    DeucarianEditorTextGUI.HelpBox(
                         "This package environment is known but its project " +
                         "connection slot has not been added yet.",
                         MessageType.Warning);
                     continue;
                 }
 
-                EditorGUILayout.LabelField(
+                DeucarianEditorTextGUI.LabelField(
                     descriptor.DisplayName,
-                    EditorStyles.boldLabel);
+                    DeucarianEditorWorkbenchGUI.BoldLabelStyle);
                 foreach (ApiNamedClientDefinition client in environment.Clients)
                 {
                     if (client == null)
@@ -219,7 +218,7 @@ namespace Deucarian.API.Editor
                         continue;
                     }
 
-                    string next = EditorGUILayout.TextField(
+                    string next = DeucarianEditorInputGUI.TextField(
                         client.ClientId,
                         client.BaseUrl ?? string.Empty);
                     if (!string.Equals(
@@ -238,7 +237,7 @@ namespace Deucarian.API.Editor
             bool requiresSynchronization =
                 RequiresSynchronization(selectedSettings, descriptors);
             if (requiresSynchronization &&
-                GUILayout.Button(
+                DeucarianEditorActionGUI.Button(
                     missingSlotCount > 0
                         ? "Add Missing Connection Slots"
                         : "Synchronize Connection Slot Order"))
@@ -248,7 +247,7 @@ namespace Deucarian.API.Editor
 
             if (selectedSettings.TryValidate(out string validMessage))
             {
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     missingSlotCount > 0
                         ? "Connection shape is compatible. Add the missing " +
                           "package slots to configure every environment."
@@ -258,10 +257,10 @@ namespace Deucarian.API.Editor
             }
             else
             {
-                EditorGUILayout.HelpBox(validMessage, MessageType.Error);
+                DeucarianEditorTextGUI.HelpBox(validMessage, MessageType.Error);
             }
 
-            if (GUILayout.Button("Save connection settings"))
+            if (DeucarianEditorActionGUI.Button("Save connection settings"))
             {
                 AssetDatabase.SaveAssets();
                 message = "Connection settings saved.";
@@ -394,11 +393,11 @@ namespace Deucarian.API.Editor
                 label = "API Connections",
                 guiHandler = _ =>
                 {
-                    EditorGUILayout.HelpBox(
+                    DeucarianEditorTextGUI.HelpBox(
                         "Configure explicit GUID bindings and environment " +
                         "hosts in the API Connections tool.",
                         MessageType.Info);
-                    if (GUILayout.Button("Open API Connections"))
+                    if (DeucarianEditorActionGUI.Button("Open API Connections"))
                     {
                         Open();
                     }
