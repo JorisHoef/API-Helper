@@ -23,7 +23,7 @@ namespace Deucarian.API.Editor
                 PackageId,
                 "cloudconnect",
                 new[] { "api", "environment", "service", "connection" },
-                10));
+                10, createPage: ApiConnectionsWindow.CreatePage));
             DeucarianControlCenterRegistry.RegisterCardProvider(
                 new ApiControlCenterCardProvider());
         }
@@ -129,7 +129,7 @@ namespace Deucarian.API.Editor
                         "api.open-connections",
                         "Open API Connections",
                         ApiConnectionsWindow.Open,
-                        "Configure project-owned environment hosts.")
+                        "Configure project-owned environment hosts.", navigationToolId: DeucarianToolIds.ApiConnections)
                 },
                 new[] { "api", "connections", "services", "environments", "hosts" });
         }
