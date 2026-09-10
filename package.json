@@ -1,6 +1,6 @@
 {
   "name": "com.deucarian.api",
-  "version": "2.0.2",
+  "version": "2.0.4",
   "displayName": "Deucarian API",
   "description": "A reusable Unity API foundation with package-owned service definitions, project-owned connection settings, typed identifiers, validation, and HTTP transport.",
   "license": "MIT",
@@ -13,7 +13,7 @@
     "url": "git+https://github.com/Deucarian/API.git"
   },
   "dependencies": {
-    "com.deucarian.editor": "1.2.0",
+    "com.deucarian.editor": "1.7.0",
     "com.deucarian.logging": "1.0.4",
     "com.unity.modules.unitywebrequest": "1.0.0",
     "com.unity.nuget.newtonsoft-json": "3.2.2",

@@ -21,19 +21,24 @@ namespace Deucarian.API.Editor
     {
         private bool showAdvanced;
 
+        public override UnityEngine.UIElements.VisualElement CreateInspectorGUI() =>
+
+            DeucarianEditorInspector.Create(OnInspectorGUI);
+
+
         public override void OnInspectorGUI()
         {
             var settings = (ApiConnectionSettings)target;
             bool projectOwned = IsProjectOwned(settings);
 
-            EditorGUILayout.LabelField(
+            DeucarianEditorTextGUI.LabelField(
                 "API Connection Settings",
-                EditorStyles.boldLabel);
-            EditorGUILayout.LabelField(
+                DeucarianEditorWorkbenchGUI.BoldLabelStyle);
+            DeucarianEditorTextGUI.LabelField(
                 "This project owns deployment hosts. The referenced service " +
                 "definition owns stable environments, named clients, routes, " +
                 "methods, and authentication requirements.",
-                EditorStyles.wordWrappedLabel);
+                DeucarianEditorWorkbenchGUI.LabelStyle);
             EditorGUILayout.Space();
 
             DrawServiceDefinition(settings);
@@ -45,7 +50,7 @@ namespace Deucarian.API.Editor
             if (!projectOwned)
             {
                 EditorGUILayout.Space();
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     "Package-managed and transient connection settings are " +
                     "read-only. Use the integration's explicit setup action " +
                     "to create project-owned settings.",
@@ -55,9 +60,9 @@ namespace Deucarian.API.Editor
 
         private void DrawServiceDefinition(ApiConnectionSettings settings)
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope(DeucarianEditorStyles.SectionBox))
             {
-                EditorGUILayout.LabelField("API Service", EditorStyles.boldLabel);
+                DeucarianEditorTextGUI.LabelField("API Service", DeucarianEditorWorkbenchGUI.BoldLabelStyle);
                 serializedObject.Update();
                 SerializedProperty property =
                     serializedObject.FindProperty("serviceDefinition");
@@ -107,10 +112,10 @@ namespace Deucarian.API.Editor
 
                 if (definition != null)
                 {
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         "Service ID",
                         definition.ServiceId ?? string.Empty);
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         "Source version",
                         string.IsNullOrWhiteSpace(definition.SourceVersion)
                             ? "Not provided"
@@ -123,11 +128,11 @@ namespace Deucarian.API.Editor
             ApiConnectionSettings settings,
             bool projectOwned)
         {
-            EditorGUILayout.LabelField("Environments", EditorStyles.boldLabel);
+            DeucarianEditorTextGUI.LabelField("Environments", DeucarianEditorWorkbenchGUI.BoldLabelStyle);
             ApiServiceDefinition definition = settings.ServiceDefinition;
             if (definition == null)
             {
-                EditorGUILayout.HelpBox(
+                DeucarianEditorTextGUI.HelpBox(
                     "A service definition is required.",
                     MessageType.Error);
                 return;
@@ -137,7 +142,7 @@ namespace Deucarian.API.Editor
                     out IReadOnlyList<ApiEnvironmentDescriptor> descriptors,
                     out string error))
             {
-                EditorGUILayout.HelpBox(error, MessageType.Error);
+                DeucarianEditorTextGUI.HelpBox(error, MessageType.Error);
                 return;
             }
 
@@ -153,17 +158,17 @@ namespace Deucarian.API.Editor
             ApiEnvironmentDescriptor descriptor,
             bool projectOwned)
         {
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUILayout.VerticalScope(DeucarianEditorStyles.SectionBox))
             {
                 using (new EditorGUILayout.HorizontalScope())
                 {
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         descriptor.DisplayName,
-                        EditorStyles.boldLabel);
+                        DeucarianEditorWorkbenchGUI.BoldLabelStyle);
                     GUILayout.FlexibleSpace();
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         descriptor.Stage.ToString(),
-                        EditorStyles.miniLabel,
+                        DeucarianEditorWorkbenchGUI.MiniLabelStyle,
                         GUILayout.Width(90f));
                 }
 
@@ -179,7 +184,7 @@ namespace Deucarian.API.Editor
                         "', but this older project asset has no connection slot yet.",
                         DeucarianEditorStatus.Warning,
                         MessageType.Warning);
-                    if (projectOwned && GUILayout.Button(
+                    if (projectOwned && DeucarianEditorActionGUI.Button(
                             "Add Missing Connection Slots"))
                     {
                         if (!ApiConnectionSettingsAssetFactory
@@ -217,7 +222,7 @@ namespace Deucarian.API.Editor
                     ApiNamedClientDefinition client = clients[index];
                     if (client == null)
                     {
-                        EditorGUILayout.HelpBox(
+                        DeucarianEditorTextGUI.HelpBox(
                             "Named client " + (index + 1) + " is missing.",
                             MessageType.Error);
                         continue;
@@ -226,7 +231,7 @@ namespace Deucarian.API.Editor
                     using (new EditorGUI.DisabledScope(!canEdit))
                     {
                         EditorGUI.BeginChangeCheck();
-                        string baseUrl = EditorGUILayout.TextField(
+                        string baseUrl = DeucarianEditorInputGUI.TextField(
                             GetBaseUrlLabel(client, clients.Count),
                             client.BaseUrl ?? string.Empty);
                         if (EditorGUI.EndChangeCheck())
@@ -273,7 +278,7 @@ namespace Deucarian.API.Editor
             ApiConnectionSettings settings,
             bool projectOwned)
         {
-            showAdvanced = EditorGUILayout.Foldout(
+            showAdvanced = DeucarianEditorInputGUI.Foldout(
                 showAdvanced,
                 "Advanced policies",
                 true);
@@ -282,7 +287,7 @@ namespace Deucarian.API.Editor
                 return;
             }
 
-            EditorGUILayout.HelpBox(
+            DeucarianEditorTextGUI.HelpBox(
                 "Identifiers are managed by the service definition. Do not " +
                 "store credentials or secret headers in this asset.",
                 MessageType.Info);
@@ -297,9 +302,9 @@ namespace Deucarian.API.Editor
                     }
 
                     EditorGUILayout.Space(2f);
-                    EditorGUILayout.LabelField(
+                    DeucarianEditorTextGUI.LabelField(
                         environment.DisplayName ?? environment.name,
-                        EditorStyles.boldLabel);
+                        DeucarianEditorWorkbenchGUI.BoldLabelStyle);
                     using (new EditorGUI.DisabledScope(
                                !IsProjectOwned(environment)))
                     {
@@ -362,14 +367,14 @@ namespace Deucarian.API.Editor
         {
             using (new EditorGUILayout.HorizontalScope())
             {
-                EditorGUILayout.LabelField("Status", GUILayout.Width(116f));
+                DeucarianEditorTextGUI.LabelField("Status", GUILayout.Width(116f));
                 DeucarianEditorStatusBadge.Draw(
                     label,
                     status,
                     GUILayout.Width(128f));
             }
 
-            EditorGUILayout.HelpBox(message, messageType);
+            DeucarianEditorTextGUI.HelpBox(message, messageType);
         }
 
         internal static ApiServiceDefinitionOwnership GetDefinitionOwnership(
